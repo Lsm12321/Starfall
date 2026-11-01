@@ -45,7 +45,6 @@ public partial class GameBootstrap
         Art(hudRoot.transform, "Screen vignette", UiKit.Vignette, new Color(0, 0, 0, .55f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         BuildTelemetry();
         BuildVitals();
-        BuildStagePanel();
         BuildExperience();
         BuildBossPanel();
         BuildBossWarning();
@@ -85,53 +84,33 @@ public partial class GameBootstrap
 
     private void BuildTelemetry()
     {
-        float panelWidth = touchControls ? 296f : 326f;
-        float panelHeight = touchControls ? 110f : 120f;
-        var panel = Frame(hudRoot.transform, "Top telemetry", touchControls ? AnchorTR : AnchorTL, touchControls ? new Vector2(-22, -92) : new Vector2(22, -20), new Vector2(panelWidth, panelHeight), GameRules.Cyan, .9f);
-        Art(panel, "Accent", UiKit.Solid, UiKit.Alpha(GameRules.Cyan, .9f), AnchorTL, new Vector2(12, -16), new Vector2(2, 24));
-        Lt(panel, UiKit.Track("STARFALL  /  SURVIVAL LOG"), 9, new Vector2(22, -11), new Vector2(panelWidth - 44f, 14), UiKit.Alpha(GameRules.Cyan, .92f), FontStyle.Bold);
-        clockText = Lt(panel, "00:00", 29, new Vector2(18, -24), new Vector2(158, 36), UiKit.TextMain, FontStyle.Bold, displayFont);
-        DropShadow(clockText, -2f);
-        HLine(panel, "Divider", 18f, -62f, 1f, new Color(1, 1, 1, .07f));
-        Lt(panel, UiKit.Track("ELIMINATIONS"), 8, new Vector2(18, -66), new Vector2(130, 12), UiKit.TextMute, FontStyle.Bold);
-        killText = Lt(panel, "000", 18, new Vector2(18, -76), new Vector2(110, 24), UiKit.TextMain, FontStyle.Bold, displayFont);
-        Rt(panel, UiKit.Track("LEVEL"), 8, new Vector2(-14, -66), new Vector2(90, 12), UiKit.TextMute, FontStyle.Bold);
-        levelText = Rt(panel, "01", 18, new Vector2(-14, -76), new Vector2(90, 24), GameRules.Gold, FontStyle.Bold, displayFont);
-    }
-
-    private void BuildStagePanel()
-    {
-        // Stage information replaces the old upper-right loadout panel.
-        var panel = Frame(hudRoot.transform, "Stage telemetry", AnchorTR, new Vector2(-22, touchControls ? -212 : -20), new Vector2(240, 126), GameRules.Gold, .9f);
+        // Compact top-right readout: clock, level, stage name and wave progress only.
+        var panel = Frame(hudRoot.transform, "Top telemetry", AnchorTR, new Vector2(-22, -20), new Vector2(220, 100), GameRules.Gold, .9f);
         stageEdge = panel.Find("Edge").GetComponent<Image>();
-        Art(panel, "Accent", UiKit.Solid, UiKit.Alpha(GameRules.Gold, .9f), AnchorTL, new Vector2(12, -16), new Vector2(2, 24));
-        stageSectorText = Lt(panel, UiKit.Track("SECTOR 01"), 8, new Vector2(14, -9), new Vector2(90, 12), UiKit.TextMute, FontStyle.Bold);
-        stageIndexText = Rt(panel, "STAGE 01 / 03", 8, new Vector2(-14, -9), new Vector2(120, 12), GameRules.Gold, FontStyle.Bold);
-        waveText = Lt(panel, GameRules.StageName(1), 12, new Vector2(14, -23), new Vector2(212, 34), UiKit.TextMain, FontStyle.Bold);
-        HLine(panel, "Divider", 14f, -60f, 1f, new Color(1, 1, 1, .07f));
-        waveLabelText = Lt(panel, UiKit.Track("WAVE 01 / 18"), 8, new Vector2(14, -64), new Vector2(150, 12), UiKit.TextMute, FontStyle.Bold);
+        Art(panel, "Accent", UiKit.Solid, UiKit.Alpha(GameRules.Gold, .9f), AnchorTL, new Vector2(12, -12), new Vector2(2, 20));
+        clockText = Lt(panel, "00:00", 26, new Vector2(14, -8), new Vector2(120, 32), UiKit.TextMain, FontStyle.Bold, displayFont);
+        DropShadow(clockText, -2f);
+        Rt(panel, UiKit.Track("LEVEL"), 7, new Vector2(-12, -9), new Vector2(70, 10), UiKit.TextMute, FontStyle.Bold);
+        levelText = Rt(panel, "01", 16, new Vector2(-12, -20), new Vector2(70, 20), GameRules.Gold, FontStyle.Bold, displayFont);
+        waveText = Lt(panel, GameRules.StageName(1), 12, new Vector2(14, -42), new Vector2(192, 28), UiKit.TextMain, FontStyle.Bold);
+        waveLabelText = Lt(panel, UiKit.Track("WAVE 01 / 18"), 8, new Vector2(14, -70), new Vector2(150, 12), UiKit.TextMute, FontStyle.Bold);
         Image waveGlow;
-        waveFill = Bar(panel, "Wave progress", 14f, 14f, -78f, 4f, new Color(.09f, .15f, .18f, .85f), GameRules.Cyan, new Color(1, 1, 1, .1f), out waveGlow, out _, 18);
+        waveFill = Bar(panel, "Wave progress", 14f, 14f, -82f, 4f, new Color(.09f, .15f, .18f, .85f), GameRules.Cyan, new Color(1, 1, 1, .1f), out waveGlow, out _, 18);
         waveGlow.color = UiKit.Alpha(GameRules.Cyan, .14f);
-        Lt(panel, "BOSS", 7, new Vector2(14, -89), new Vector2(40, 10), UiKit.TextMute, FontStyle.Bold);
-        for (int i = 0; i < stagePips.Length; i++)
-            stagePips[i] = Art(panel, "Boss pip", UiKit.Diamond, new Color(1, 1, 1, .14f), AnchorTL, new Vector2(52f + i * 18f, -88f), new Vector2(9f, 9f));
     }
 
     private void BuildVitals()
     {
-        // Compact combat vitals live directly under the survival clock: 304x96 against the
-        // 326x138 telemetry frame, so they read as a secondary block instead of a second HUD.
-        var panel = Frame(hudRoot.transform, "Vitals", AnchorTL, new Vector2(22, touchControls ? -20 : -166), new Vector2(touchControls ? 276 : 304, touchControls ? 84 : 96), GameRules.Pink, .88f);
+        var panel = Frame(hudRoot.transform, "Vitals", AnchorTL, new Vector2(22, -20), new Vector2(276, 84), GameRules.Pink, .88f);
         healthEdge = panel.Find("Edge").GetComponent<Image>();
         Art(panel, "Pulse dot", UiKit.Diamond, UiKit.Alpha(GameRules.Pink, .95f), AnchorTL, new Vector2(13, -9), new Vector2(5, 5));
-        Lt(panel, UiKit.Track("INTEGRITY"), touchControls ? 10 : 7, new Vector2(24, -7), new Vector2(150, 12), UiKit.TextDim, FontStyle.Bold);
-        healthText = Rt(panel, "100 / 100", touchControls ? 16 : 12, new Vector2(-12, -4), new Vector2(150, 18), UiKit.TextMain, FontStyle.Bold, displayFont);
+        Lt(panel, UiKit.Track("INTEGRITY"), 10, new Vector2(24, -7), new Vector2(150, 12), UiKit.TextDim, FontStyle.Bold);
+        healthText = Rt(panel, "100 / 100", 16, new Vector2(-12, -4), new Vector2(150, 18), UiKit.TextMain, FontStyle.Bold, displayFont);
         hpFill = Bar(panel, "Health fill", 14f, 14f, -29f, 8f, new Color(.16f, .07f, .1f, .85f), GameRules.Pink, new Color(1, 1, 1, .22f), out hpGlow, out hpGhost, 8);
         HLine(panel, "Divider", 14f, -43f, 1f, new Color(1, 1, 1, .07f));
         Art(panel, "Dash dot", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .9f), AnchorTL, new Vector2(13, -49), new Vector2(5, 5));
-        Lt(panel, UiKit.Track("DASH"), touchControls ? 10 : 7, new Vector2(24, -47), new Vector2(120, 12), UiKit.TextDim, FontStyle.Bold);
-        dashText = Rt(panel, "READY", touchControls ? 13 : 9, new Vector2(-12, -45), new Vector2(140, 16), GameRules.Cyan, FontStyle.Bold);
+        Lt(panel, UiKit.Track("DASH"), 10, new Vector2(24, -47), new Vector2(120, 12), UiKit.TextDim, FontStyle.Bold);
+        dashText = Rt(panel, "READY", 13, new Vector2(-12, -45), new Vector2(140, 16), GameRules.Cyan, FontStyle.Bold);
         Image dashGlow;
         dashFill = Bar(panel, "Dash cooldown", 14f, 14f, -67f, 6f, new Color(.08f, .13f, .16f, .9f), GameRules.Cyan, new Color(1, 1, 1, .16f), out dashGlow, out _, 0);
     }
@@ -148,7 +127,7 @@ public partial class GameBootstrap
 
     private Sprite SquarePortrait(string key)
     {
-        Texture2D texture = Resources.Load<Texture2D>("Art/" + key);
+        Texture2D texture = Resources.Load<Texture2D>(ArtPath(key));
         if (texture == null) return null;
         int size = Mathf.RoundToInt(texture.width * .72f);
         int x = (texture.width - size) / 2;
@@ -191,7 +170,7 @@ public partial class GameBootstrap
 
     private void BuildBossPanel()
     {
-        var boss = Frame(hudRoot.transform, "Boss health", AnchorTC, new Vector2(touchControls ? 25f : 60f, -18), new Vector2(touchControls ? 520f : 700f, 88), GameRules.Pink, .95f);
+        var boss = Frame(hudRoot.transform, "Boss health", AnchorTC, new Vector2(25f, -18), new Vector2(520f, 88), GameRules.Pink, .95f);
         bossFrameEdge = boss.Find("Edge").GetComponent<Image>();
         var hex = Node(boss, "Boss portrait frame", AnchorTL, new Vector2(12, -10), new Vector2(68, 68));
         Art(hex, "Glow", UiKit.Glow, UiKit.Alpha(GameRules.Pink, .3f), new Vector2(0, 0), new Vector2(1, 1), AnchorCC, Vector2.zero, new Vector2(30, 30));
@@ -199,8 +178,8 @@ public partial class GameBootstrap
         bossPortrait = Art(hex, "Boss portrait", null, Color.white, new Vector2(0, 0), new Vector2(1, 1), AnchorCC, Vector2.zero, new Vector2(-8, -8));
         bossPortrait.preserveAspect = true;
         Art(hex, "Hex edge", UiKit.HexEdge, UiKit.Alpha(GameRules.Pink, .75f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        bossHeader = MakeText(boss, "Boss title", "THE DREAD WARDEN", 13, TextAnchor.MiddleLeft, AnchorTL, AnchorTL, AnchorTL, new Vector2(96, -11), new Vector2(touchControls ? 370 : 470, 22), GameRules.Pink, FontStyle.Bold, null);
-        bossText = Lm(boss, "PHASE I  /  HUNTER", 10, new Vector2(96, -35), new Vector2(touchControls ? 330 : 430, 16), UiKit.TextDim);
+        bossHeader = MakeText(boss, "Boss title", "THE DREAD WARDEN", 13, TextAnchor.MiddleLeft, AnchorTL, AnchorTL, AnchorTL, new Vector2(96, -11), new Vector2(370, 22), GameRules.Pink, FontStyle.Bold, null);
+        bossText = Lm(boss, "PHASE I  /  HUNTER", 10, new Vector2(96, -35), new Vector2(330, 16), UiKit.TextDim);
         Rt(boss, UiKit.Track("ARENA 01"), 9, new Vector2(-18, -13), new Vector2(120, 14), UiKit.TextMute, FontStyle.Bold);
         bossFill = Bar(boss, "Boss health fill", 94f, 22f, -58f, 9f, new Color(.18f, .06f, .1f, .9f), GameRules.Pink, new Color(1, 1, 1, .25f), out bossGlow, out _, 4);
         bossPanel = boss.gameObject;
@@ -209,7 +188,7 @@ public partial class GameBootstrap
 
     private void BuildBanner()
     {
-        bannerRoot = Node(hudRoot.transform, "Banner", AnchorTC, new Vector2(touchControls ? 45f : 60f, -122), new Vector2(touchControls ? 520f : 620f, 40));
+        bannerRoot = Node(hudRoot.transform, "Banner", AnchorTC, new Vector2(45f, -122), new Vector2(520f, 40));
         bannerGroup = bannerRoot.gameObject.AddComponent<CanvasGroup>();
         bannerGroup.alpha = 0f; bannerGroup.blocksRaycasts = false;
         Art(bannerRoot, "Backdrop", UiKit.Soft, new Color(.015f, .03f, .045f, .8f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
@@ -224,7 +203,7 @@ public partial class GameBootstrap
         hintText = Mc(hudRoot.transform, "WASD / 方向键  移动     空格  冲刺     自动攻击     C  角色     ESC  暂停", 10, UiKit.TextMute, FontStyle.Bold);
         hintText.rectTransform.anchorMin = new Vector2(.5f, 0); hintText.rectTransform.anchorMax = new Vector2(.5f, 0);
         if (touchControls) { hintText.text = "左侧摇杆移动     右侧点击冲刺     武器自动攻击"; hintText.fontSize = 12; }
-        hintText.rectTransform.pivot = new Vector2(.5f, 0); hintText.rectTransform.anchoredPosition = new Vector2(touchControls ? 0f : 170f, 18);
+        hintText.rectTransform.pivot = new Vector2(.5f, 0); hintText.rectTransform.anchoredPosition = new Vector2(0f, 18);
         hintText.rectTransform.sizeDelta = new Vector2(touchControls ? 640f : 560f, 18);
     }
 

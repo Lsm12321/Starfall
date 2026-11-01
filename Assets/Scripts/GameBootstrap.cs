@@ -47,7 +47,7 @@ public partial class GameBootstrap : MonoBehaviour
     private Image characterFeaturePortrait, characterFeatureEdge, characterFeatureGlow, characterFeatureWeaponIcon;
     private Text characterFeatureName, characterFeatureCallSign, characterFeatureQuote, characterFeatureStory;
     private Text characterFeatureWeapon, characterFeatureWeaponDesc, characterFeaturePassive, characterFeaturePassiveDesc;
-    private Text characterFeatureIndex, characterFeatureDifficulty, characterFeatureFile;
+    private Text characterFeatureIndex;
     private readonly Image[,] characterStatSegments = new Image[3, 5];
     private readonly Text[] characterStatValues = new Text[3];
     private readonly Button[] choiceButtons = new Button[3];
@@ -284,7 +284,7 @@ public partial class GameBootstrap : MonoBehaviour
 
     private void CreateArena()
     {
-        Texture2D arenaTexture = Resources.Load<Texture2D>("Art/arena-floor-stage1") ?? Resources.Load<Texture2D>("Art/arena-floor");
+        Texture2D arenaTexture = Resources.Load<Texture2D>("Art/Arena/arena-floor-stage1");
         if (arenaTexture != null)
         {
             var ground = new GameObject("Blender ruin arena");
@@ -294,7 +294,7 @@ public partial class GameBootstrap : MonoBehaviour
             arenaFloorRenderer.sortingOrder = -30;
             for (int i = 0; i < arenaStageSprites.Length; i++)
             {
-                Texture2D stageTexture = Resources.Load<Texture2D>($"Art/arena-floor-stage{i + 1}");
+                Texture2D stageTexture = Resources.Load<Texture2D>($"Art/Arena/arena-floor-stage{i + 1}");
                 if (stageTexture != null) arenaStageSprites[i] = ArenaSprite(stageTexture);
             }
             SetArenaStage(1);
@@ -408,8 +408,6 @@ public partial class GameBootstrap : MonoBehaviour
             characterFeaturePassive.text = PassiveTitle(selected.Id);
             characterFeaturePassiveDesc.text = selected.Passive;
             characterFeatureIndex.text = ((int)selected.Id + 1).ToString("00") + " / 05";
-            if (characterFeatureFile != null) characterFeatureFile.text = "FILE " + ((int)selected.Id + 1).ToString("00");
-            characterFeatureDifficulty.text = "作战难度  " + DifficultyLabel(selected.Id);
             for (int s = 0; s < 3; s++)
             {
                 int value = StatValue(selected.Id, s);
@@ -469,8 +467,6 @@ public partial class GameBootstrap : MonoBehaviour
             default: return "狙击式冰晶长枪，长弹体高速贯穿并施加霜缓。";
         }
     }
-
-    private static string DifficultyLabel(CharacterKind id) => id == CharacterKind.Rin || id == CharacterKind.Mei ? "进阶" : "入门";
 
     private static int StatValue(CharacterKind id, int category) => CharacterRoster.Stat(id, category);
 
@@ -608,11 +604,22 @@ public partial class GameBootstrap : MonoBehaviour
         found.Sort((a, b) => (a.transform.position - (Vector3)point).sqrMagnitude.CompareTo((b.transform.position - (Vector3)point).sqrMagnitude)); return found;
     }
 
+    private static string ArtPath(string name)
+    {
+        if (name == "arena") return "Art/UI/Illustrations/arena";
+        if (name.StartsWith("Icons/")) return "Art/UI/" + name;
+        if (name.StartsWith("pilot_sprite_")) return "Art/Characters/Sprites/" + name;
+        if (name.StartsWith("portrait_")) return "Art/Characters/Portraits/" + name;
+        if (name.StartsWith("starfall_boss")) return "Art/Bosses/" + name;
+        if (name.StartsWith("starfall_")) return "Art/Enemies/" + name;
+        return "Art/" + name;
+    }
+
     public Sprite GetSprite(string name)
     {
         if (!sprites.TryGetValue(name, out Sprite sprite))
         {
-            Texture2D texture = Resources.Load<Texture2D>("Art/" + name);
+            Texture2D texture = Resources.Load<Texture2D>(ArtPath(name));
             if (texture != null)
             {
                 int pixelsPerUnit = name.StartsWith("pilot_sprite_") ? 512 : name.StartsWith("starfall_boss_echo_herald") || name.StartsWith("starfall_boss_star_eater") ? 256 : 128;
@@ -637,7 +644,7 @@ public partial class GameBootstrap : MonoBehaviour
     }
 
     private Sprite SpriteResource(string key)
-    { Texture2D texture = Resources.Load<Texture2D>("Art/" + key); return texture == null ? null : Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128); }
+    { Texture2D texture = Resources.Load<Texture2D>(ArtPath(key)); return texture == null ? null : Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128); }
 
     private void SpawnEnemy()
     {

@@ -10,8 +10,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT / "Assets" / "Resources" / "Art"
-SOURCE = ART / "arena-floor-stage2.png"
-OUTPUT = ART / "arena-floor-stage2.png"
+SOURCE = ART / "Arena" / "arena-floor-stage2.png"
+OUTPUT = ART / "Arena" / "arena-floor-stage2.png"
 
 
 def grade(pixel):

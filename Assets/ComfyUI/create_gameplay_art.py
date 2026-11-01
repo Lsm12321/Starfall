@@ -217,7 +217,7 @@ def make_pilot_models():
             line(((105, 214), (119, 221), (111, 232), (127, 239), (143, 224)), (*accent, 245), 4)
 
         final = image.resize((512, 640), Image.Resampling.LANCZOS)
-        final.save(ART / f"pilot_sprite_{key}.png", optimize=True)
+        final.save(ART / "Characters" / "Sprites" / f"pilot_sprite_{key}.png", optimize=True)
 
     for key in PILOT_PALETTES:
         draw_pilot(key)
@@ -364,10 +364,10 @@ def make_icons():
     mapping = {
         "weapon_pulse": "pulse", "weapon_scatter": "scatter", "weapon_orbit": "orbit", "weapon_arc": "arc", "weapon_cryo": "cryo",
         "stat_damage": "damage", "stat_haste": "haste", "stat_speed": "speed", "stat_health": "health", "stat_magnet": "magnet",
-        "stat_crit": "crit", "stat_crit_damage": "crit_damage", "stat_pierce": "pierce", "stat_regen": "regen", "stat_armor": "armor", "stat_medical": "medical", "emergency_repair": "repair",
+        "stat_crit": "crit", "stat_crit_damage": "crit_damage", "stat_pierce": "pierce", "stat_regen": "regen", "stat_armor": "armor", "emergency_repair": "repair",
         "boss_overload": "boss_overload", "boss_phoenix": "boss_phoenix", "boss_resonance": "boss_resonance",
     }
-    icon_dir = ART / "Icons"
+    icon_dir = ART / "UI" / "Icons"
     icon_dir.mkdir(parents=True, exist_ok=True)
     for filename, shape in mapping.items():
         draw_icon(shape, ICON_COLORS[shape]).save(icon_dir / f"{filename}.png", optimize=True)
@@ -376,4 +376,4 @@ def make_icons():
 if __name__ == "__main__":
     ART.mkdir(parents=True, exist_ok=True)
     make_icons()
-    print("Created", len(list((ART / "Icons").glob("*.png"))), "skill icons. Rebuild 3D pilot and enemy models with Assets/Blender/create_gameplay_models.py.")
+    print("Created", len(list((ART / "UI" / "Icons").glob("*.png"))), "skill icons. Rebuild 3D pilot and enemy models with Assets/Blender/create_gameplay_models.py.")

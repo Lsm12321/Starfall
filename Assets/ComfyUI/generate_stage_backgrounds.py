@@ -74,7 +74,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--server", default="http://127.0.0.1:8189")
     parser.add_argument("--workflow", type=Path, default=Path(__file__).with_name("arena_api.json"))
-    parser.add_argument("--output-dir", type=Path, default=Path(__file__).resolve().parents[1] / "Resources" / "Art")
+    parser.add_argument("--output-dir", type=Path, default=Path(__file__).resolve().parents[1] / "Resources" / "Art" / "Arena")
     args = parser.parse_args()
     graph = json.loads(args.workflow.read_text(encoding="utf-8"))
     for key, prompt, seed in PROMPTS:

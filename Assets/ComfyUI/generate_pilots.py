@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--width", type=int, default=768)
     parser.add_argument("--height", type=int, default=1152)
     parser.add_argument("--steps", type=int, default=26)
-    parser.add_argument("--output", type=Path, default=ROOT / "Assets" / "Resources" / "Art")
+    parser.add_argument("--output", type=Path, default=ROOT / "Assets" / "Resources" / "Art" / "Characters" / "Portraits")
     parser.add_argument("--limit", type=int, default=5)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)

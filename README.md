@@ -40,7 +40,7 @@ Unity 6 制作的二次元科幻风 2D 俯视角生存肉鸽。移动躲避逐�
 - 星尘经验、医疗掉落、补给宝箱、冲刺与受伤无敌时间、暴击数字、电弧和警示圈。
 - 03:00 迎战 Boss 1「噬影守望者」。选择核心后进入至少 02:00 的二级敌潮，再迎战 Boss 2「回响先驱」；其会绕场移动、预告后跃迁并交替释放扇形弹幕和旋转弹幕。再次选择核心后进入至少 02:30 的三级敌潮，再迎战 Boss 3「星蚀巨兽」；它是不可移动的巨型场景级 Boss，以覆盖范围更大的星蚀弹幕和核心脉冲攻击玩家。每位 Boss 有两阶段攻击，击杀时触发慢动作、镜头震动、能量爆发与专属音效。
 - 前两位 Boss 击杀后可选择一项核心强化并恢复满血；第三位 Boss 击杀后直接进入胜利结算，不再弹出核心选择页。超载核心提供最终伤害 +20%、最终攻速 +15%、暴击率 +20%；凤凰协议提供生命上限 +60、护甲 +15%、移速 +18%、每秒回复 +1 和受击时 30% 免伤概率；星核共鸣提供暴击率 +30%、暴击伤害 +50%，且暴击率超过 100% 后每溢出 1% 增加 2% 暴击伤害。每种核心一局只能获得一次，已获得的核心会从后续奖励中移除。
-- 五名驾驶员和三名 Boss 均以 Blender 可编辑 3D 模型制作并渲染为局内透明精灵；驾驶员服装、发型、配色和武器根据角色档案与人设立绘定制。Boss 头像随战斗阶段显示在 HUD，三个阶段使用各自的竞技场美术。模型源文件位于 `Assets/ArtSource/Blender`。
+- 五名驾驶员和三名 Boss 均以 Blender 可编辑 3D 模型制作并渲染为局内透明精灵；驾驶员服装、发型、配色和武器根据角色档案与人设立绘定制。Boss 头像随战斗阶段显示在 HUD，三个阶段使用各自的竞技场美术。3D 模型源文件已移出 `Assets`，备份在 `work/removed-art-source-2026-11-01.zip`。
 - 主菜单、角色档案、中文升级说明、血条、经验条、武器栏、冷却条、Boss 血条、暂停、胜负结算、再次远征、最佳击杀和通关次数保存；原创程序音效可静音。
 
 ## 打开与构建工程
@@ -53,14 +53,11 @@ Windows 打包：Unity 菜单 `Starfall > Build Windows game`。自动生成的 
 
 ## 美术素材
 
-`Assets/Resources/Art` 包含 ComfyUI 生成的五张角色立绘与菜单插图、Blender 渲染的五名驾驶员模型、分阶敌人和三名 Boss 精灵、三张阶段竞技场 PNG，以及 `Icons` 下的 20 个强化图标。驾驶员、敌人和 Boss 的可编辑模型集中在 `Assets/ArtSource/Blender`。
+`Assets/Resources/Art` 已按用途分类：`Arena`（三张阶段竞技场）、`Bosses`（三名 Boss）、`Characters/Portraits`（五张角色立绘）、`Characters/Sprites`（五名驾驶员局内精灵）、`Enemies`（九种敌人）、`UI/Icons`（19 个强化图标）和 `UI/Illustrations`（菜单插图）。已删除未使用的 `starfall_hero`、`starfall_boss`、`stat_medical`、旧 `arena-floor` 以及 `.blend1` 自动备份和 `__pycache__`。
 
-重新生成角色与竞技场素材：
+`Assets/Icon` 只保留构建用 `AppIcon.png`，被 Windows 与 Android 打包脚本引用，不能删除。
 
-```powershell
-blender --background --python Assets/Blender/create_sprite_dummies.py
-blender --background --python Assets/Blender/create_arena.py
-```
+3D `.blend` 源文件和 Blender 生成脚本不属于运行时资源，也未参与 APK 构建，现已移出 `Assets`，备份在 `work/removed-art-source-2026-11-01.zip`。游戏运行和出包不依赖它们；若以后需要继续编辑模型，解压备份后放回任意非 `Resources` 目录即可。
 
 角色立绘由 ComfyUI 生成。ComfyUI 正在本机 `127.0.0.1:8188` 运行且已有 `animagine-xl-4.0.safetensors` 时，执行：
 
@@ -68,19 +65,11 @@ blender --background --python Assets/Blender/create_arena.py
 python Assets/ComfyUI/generate_pilots.py
 ```
 
-脚本将以固定 seed 顺序生成五张 768×1152 立绘，写入 `Assets/Resources/Art`；提示词、负面提示和 seed 同时保存在 `Assets/ComfyUI/pilot_prompts.json`。游戏运行不依赖 ComfyUI。
+脚本将以固定 seed 顺序生成五张 768×1152 立绘，写入 `Assets/Resources/Art/Characters/Portraits`；提示词、负面提示和 seed 同时保存在 `Assets/ComfyUI/pilot_prompts.json`。游戏运行不依赖 ComfyUI。
 
-强化图标可用确定性脚本重新生成（不需要联网或 ComfyUI）；运行前请先用 Blender 重渲染角色与敌人模型：
-
-```powershell
-blender --background --python Assets/Blender/create_gameplay_models.py
-python Assets/ComfyUI/create_gameplay_art.py
-```
-
-Blender 脚本会生成五名驾驶员、六种新增分阶敌人和 Boss 的透明战斗精灵，并保存可编辑 `.blend` 源文件；图标脚本只更新 `Assets/Resources/Art/Icons`。
+强化图标脚本仍在 `Assets/ComfyUI/create_gameplay_art.py`，输出到 `Assets/Resources/Art/UI/Icons`；如需重新渲染驾驶员、敌人和 Boss 模型，请先从上述备份包恢复 Blender 工程。
 
 主菜单插图工作流在 `Assets/ComfyUI/arena_api.json`，可用 `python Assets/ComfyUI/generate_arena.py` 重新生成候选图。
-
 ## 验证
 
 Unity 6 Windows 开发构建和自动运行回归覆盖五套 Blender 角色精灵、敌种资源、三张阶段竞技场及 Boss HUD 专属头像、生命扩容、武器选择、核心不可重复规则与升级效果；回归会快进至三名 Boss，验证阶段美术切换、两次长敌潮间隔、敌种阶梯保留与新增、二号 Boss 跃迁、三号 Boss 固定不动、唯一核心奖励、最终结算和无运行时异常。回归不代表五名角色完整长局的胜率模拟。

@@ -14,7 +14,7 @@ public partial class GameBootstrap
     private Camera letterboxCamera;
     private int viewportWidth, viewportHeight;
     private VirtualJoystick virtualJoystick;
-    private MobileActionButton dashTouchButton, pauseTouchButton;
+    private MobileActionButton dashTouchButton;
     private Image dashButtonRing;
     private Text dashButtonState;
     private GameObject touchRoot;
@@ -86,10 +86,10 @@ public partial class GameBootstrap
         ApplyAspectLock(true);
     }
 
-    // Keep combat controls comfortable while each phone page uses its own layout scale.
+    // The in-game HUD uses the phone reference for both desktop and mobile.
     private void UpdateGameplayUiScale()
     {
-        if (!touchControls || uiScaler == null) return;
+        if (uiScaler == null) return;
         bool gameplay = State == RunState.Playing;
         if (gameplay == gameplayUiScale) return;
         gameplayUiScale = gameplay;
@@ -194,16 +194,6 @@ public partial class GameBootstrap
             new Vector2(0f, -24f), new Vector2(132f, 22f), GameRules.Cyan, FontStyle.Bold, uiFont);
         dashTouchButton = dash.gameObject.AddComponent<MobileActionButton>();
         dashTouchButton.Init(this, false);
-
-        // Time and stage telemetry own the upper-right column; pause stays in its corner.
-        var pause = Node(touchRoot.transform, "Pause touch button", AnchorTR, new Vector2(-42f, -42f), new Vector2(64f, 64f));
-        var pauseHit = Art(pause, "Touch area", UiKit.Soft, new Color(1f, 1f, 1f, .002f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        pauseHit.raycastTarget = true;
-        Art(pause, "Pause body", UiKit.Soft, new Color(.02f, .06f, .08f, .72f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, new Vector2(-2f, -2f));
-        Art(pause, "Pause edge", UiKit.SoftEdge, new Color(1f, 1f, 1f, .16f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Mc(pause, "II", 24, UiKit.TextMain, FontStyle.Bold);
-        pauseTouchButton = pause.gameObject.AddComponent<MobileActionButton>();
-        pauseTouchButton.Init(this, true);
     }
 
     private void RefreshTouchHud()

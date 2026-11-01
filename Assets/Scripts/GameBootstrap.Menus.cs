@@ -43,22 +43,25 @@ public partial class GameBootstrap
             panel.localScale = Vector3.one * .86f;
         }
 
-        Art(panel, "Title glow", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .13f), AnchorTL, new Vector2(56, -96), new Vector2(720, 320));
-        Art(panel, "Kicker mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .95f), AnchorTL, new Vector2(97, -106), new Vector2(8, 8));
-        Lt(panel, UiKit.Track("SURVIVOR FILE 001   ·   ASHEN GATE"), 10, new Vector2(114, -102), new Vector2(470, 16), UiKit.Alpha(GameRules.Cyan, .95f), FontStyle.Bold);
-        var title = Lt(panel, "STARFALL", 80, new Vector2(92, -128), new Vector2(640, 96), UiKit.TextMain, FontStyle.Bold, displayFont);
+        var left = Node(panel, "Menu left", AnchorTL, Vector2.zero, new Vector2(1440, 810));
+        left.localScale = Vector3.one * (touchControls ? 1.06f : 1.04f);
+
+        Art(left, "Title glow", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .13f), AnchorTL, new Vector2(56, -96), new Vector2(720, 320));
+        Art(left, "Kicker mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .95f), AnchorTL, new Vector2(97, -106), new Vector2(8, 8));
+        Lt(left, UiKit.Track("SURVIVOR FILE 001   ·   ASHEN GATE"), 10, new Vector2(114, -102), new Vector2(470, 16), UiKit.Alpha(GameRules.Cyan, .95f), FontStyle.Bold);
+        var title = Lt(left, "STARFALL", 80, new Vector2(92, -128), new Vector2(640, 96), UiKit.TextMain, FontStyle.Bold, displayFont);
         GlowText(title, UiKit.Alpha(GameRules.Cyan, .18f), 1.5f);
         DropShadow(title, -4f);
-        Lt(panel, "星 陨 · 最 后 的 微 光", 23, new Vector2(96, -228), new Vector2(520, 34), GameRules.Gold, FontStyle.Bold);
-        var rule = Art(panel, "Rule", UiKit.GradientRight, UiKit.Alpha(GameRules.Cyan, .8f), AnchorTL, new Vector2(96, -272), new Vector2(300, 2));
-        Art(panel, "Rule dot", UiKit.Diamond, GameRules.Cyan, AnchorTL, new Vector2(88, -270), new Vector2(7, 7));
-        Lt(panel, "收集星尘，组合武器，穿过不断增强的敌潮，击败苏醒的遗迹守望者。", 15, new Vector2(96, -298), new Vector2(492, 74), UiKit.TextDim, FontStyle.Normal);
-        var deploy = Cta(panel, "Select pilot", "选择驾驶员  /  SELECT PILOT", AnchorTL, new Vector2(96, -392), new Vector2(344, 64), GameRules.Cyan, false, ShowCharacterSelect, 15);
+        Lt(left, "星 陨 · 最 后 的 微 光", 23, new Vector2(96, -228), new Vector2(520, 34), GameRules.Gold, FontStyle.Bold);
+        var rule = Art(left, "Rule", UiKit.GradientRight, UiKit.Alpha(GameRules.Cyan, .8f), AnchorTL, new Vector2(96, -272), new Vector2(300, 2));
+        Art(left, "Rule dot", UiKit.Diamond, GameRules.Cyan, AnchorTL, new Vector2(88, -270), new Vector2(7, 7));
+        Lt(left, "收集星尘，组合武器，穿过不断增强的敌潮，击败苏醒的遗迹守望者。", 15, new Vector2(96, -298), new Vector2(492, 74), UiKit.TextDim, FontStyle.Normal);
+        var deploy = Cta(left, "Select pilot", "选择驾驶员  /  SELECT PILOT", AnchorTL, new Vector2(96, -392), new Vector2(344, 64), GameRules.Cyan, false, ShowCharacterSelect, 15);
         Art(deploy.transform, "Chevron", UiKit.Chevron, GameRules.Cyan, AnchorCR, new Vector2(-22, 0), new Vector2(10, 16));
-        Lt(panel, UiKit.Track(touchControls ? "LEFT PAD  MOVE     DASH  BUTTON     AUTO ATTACK" : "WASD / ARROWS  MOVE     SPACE  DASH     AUTO ATTACK"), 10, new Vector2(96, -482), new Vector2(520, 18), UiKit.TextMute, FontStyle.Bold);
-        MenuStat(panel, "BEST KILLS", PlayerPrefs.GetInt("Starfall.BestKills", 0).ToString("000"), new Vector2(96, -522), GameRules.Cyan);
-        MenuStat(panel, "CLEARS", PlayerPrefs.GetInt("Starfall.Wins", 0).ToString("00"), new Vector2(286, -522), GameRules.Gold);
-        Lt(panel, "© 2026 STARFALL STUDIO   ·   BUILD 1.0.0", 9, new Vector2(96, -742), new Vector2(420, 14), new Color(1, 1, 1, .22f), FontStyle.Normal);
+        Lt(left, UiKit.Track(touchControls ? "LEFT PAD  MOVE     DASH  BUTTON     AUTO ATTACK" : "WASD / ARROWS  MOVE     SPACE  DASH     AUTO ATTACK"), 10, new Vector2(96, -482), new Vector2(520, 18), UiKit.TextMute, FontStyle.Bold);
+        MenuStat(left, "BEST KILLS", PlayerPrefs.GetInt("Starfall.BestKills", 0).ToString("000"), new Vector2(96, -522), GameRules.Cyan);
+        MenuStat(left, "CLEARS", PlayerPrefs.GetInt("Starfall.Wins", 0).ToString("00"), new Vector2(286, -522), GameRules.Gold);
+        Lt(left, "© 2026 STARFALL STUDIO   ·   BUILD 1.0.0", 9, new Vector2(96, -742), new Vector2(420, 14), new Color(1, 1, 1, .22f), FontStyle.Normal);
         Rt(panel, touchControls ? "STARFALL STUDIO  /  MOBILE" : "STARFALL STUDIO  /  UNITY 6", 9, new Vector2(-26, -26), new Vector2(300, 14), new Color(1, 1, 1, .28f), FontStyle.Bold);
         AddUtilityButtons(panel);
     }
@@ -358,11 +361,9 @@ public partial class GameBootstrap
         Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .75f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         Art(panel, "Scanlines", UiKit.Scanlines, new Color(0, 0, 0, .4f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
 
-        if (touchControls)
-        {
-            panel = Node(panel, "Phone archive layout", AnchorCC, Vector2.zero, new Vector2(1440, 810));
-            panel.localScale = Vector3.one * .82f;
-        }
+        var archive = Node(panel, "Phone archive layout", AnchorCC, new Vector2(0, 26f), new Vector2(1440, 810));
+        if (touchControls) archive.localScale = Vector3.one * .82f;
+        panel = archive;
 
         Art(panel, "Header halo", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .10f), AnchorTL, new Vector2(240, -40), new Vector2(640, 240));
         Art(panel, "Head mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .95f), AnchorTL, new Vector2(58, -38), new Vector2(7, 7));
@@ -381,14 +382,6 @@ public partial class GameBootstrap
         characterFeaturePortrait = Art(feature, "Featured portrait", null, Color.white, AnchorTC, new Vector2(0, -18), new Vector2(280, 420));
         characterFeaturePortrait.preserveAspect = true;
         Art(feature, "Portrait scrim", UiKit.GradientDown, new Color(.012f, .02f, .032f, .92f), AnchorTC, new Vector2(0, -352), new Vector2(280, 86));
-        var indexChip = Node(feature, "File index", AnchorTL, new Vector2(22, -30), new Vector2(46, 22));
-        Art(indexChip, "Fill", UiKit.SoftSmall, new Color(.015f, .025f, .04f, .9f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Fill(indexChip, "Edge", UiKit.SoftSmallEdge, new Color(1, 1, 1, .12f));
-        characterFeatureFile = Mc(indexChip, "FILE 01", 8, UiKit.TextDim, FontStyle.Bold);
-        var difficultyChip = Node(feature, "Difficulty", AnchorTR, new Vector2(-22, -30), new Vector2(92, 22));
-        Art(difficultyChip, "Fill", UiKit.SoftSmall, new Color(.015f, .025f, .04f, .9f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Fill(difficultyChip, "Edge", UiKit.SoftSmallEdge, new Color(1, 1, 1, .12f));
-        characterFeatureDifficulty = Mc(difficultyChip, "作战难度  入门", 8, UiKit.TextDim, FontStyle.Bold);
 
         characterFeatureName = Lt(feature, "", 30, new Vector2(26, -442), new Vector2(400, 36), UiKit.TextMain, FontStyle.Bold);
         characterFeatureCallSign = Lt(feature, "", 11, new Vector2(27, -482), new Vector2(400, 18), GameRules.Cyan, FontStyle.Bold);
@@ -457,7 +450,7 @@ public partial class GameBootstrap
 
         Cta(panel, "Deploy pilot", "以当前角色出击", AnchorBR, new Vector2(-48, 34), new Vector2(300, 52), GameRules.Cyan, true, StartSelectedRun, 15);
         Cta(panel, "Back to title", "返回标题  /  ESC", AnchorBR, new Vector2(-366, 34), new Vector2(190, 44), new Color(.45f, .62f, .69f), false, () => ShowStatePanel(RunState.Menu), 12);
-        MakeText(panel, "Archive hint", "← → / 1 - 5  切换作战员     ·     点击卡片查看档案     ·     Enter 出击", 10, TextAnchor.MiddleLeft, AnchorBL, AnchorBL, AnchorBL, new Vector2(48, 30), new Vector2(600, 18), UiKit.TextDim, FontStyle.Normal, null);
+
         UpdateCharacterSelection();
     }
 

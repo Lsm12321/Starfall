@@ -49,7 +49,7 @@ public static class StarfallBuild
 
     private static void ApplyAppIcon()
     {
-        const string path = "Assets/Art/AppIcon.png";
+        const string path = "Assets/Icon/AppIcon.png";
         var importer = AssetImporter.GetAtPath(path) as TextureImporter;
         if (importer != null)
         {

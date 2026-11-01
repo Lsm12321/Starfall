@@ -86,13 +86,13 @@ public sealed class RunSmokeCheck : MonoBehaviour
         var reiPortrait = game.GetSprite("portrait_rei"); var yunaPortrait = game.GetSprite("portrait_yuna");
         Check(reiPortrait != null && yunaPortrait != null && reiPortrait.texture.width > 100 && yunaPortrait.texture.height > 100, "Five ComfyUI pilot portraits loaded");
         var requiredIcons = Enumerable.Range(0, 15).Select(GameRules.IconAsset).Concat(new[] { -1, -2, -3, -4, -5, -6 }.Select(GameRules.IconAsset)).Distinct();
-        var missingIcons = requiredIcons.Where(name => Resources.Load<Texture2D>("Art/Icons/" + name) == null).ToArray();
+        var missingIcons = requiredIcons.Where(name => Resources.Load<Texture2D>("Art/UI/Icons/" + name) == null).ToArray();
         Check(missingIcons.Length == 0, "Weapon, stat, reinforcement and boss reward icons load");
         var missingPilots = CharacterRoster.All.Where(p => { var sprite = game.GetSprite("pilot_sprite_" + p.Id.ToString().ToLowerInvariant()); return sprite == null || sprite.texture.width != 512; }).ToArray();
         Check(missingPilots.Length == 0 && CharacterRoster.All.All(p => game.GetSprite("pilot_sprite_" + p.Id.ToString().ToLowerInvariant()).texture.height == 640), "All five Blender-rendered pilot models load at full portrait ratio");
         var newEnemyKinds = new[] { EnemyKind.PhaseLancer, EnemyKind.EchoWisp, EnemyKind.RiftBrute, EnemyKind.NovaReaver, EnemyKind.SiegeOrb, EnemyKind.NullMaw };
-        Check(newEnemyKinds.All(kind => Resources.Load<Texture2D>("Art/" + GameRules.EnemyVisual(kind)) != null), "Six additional tier-two and tier-three enemy models load");
-        Check(Enumerable.Range(1, 3).All(stage => Resources.Load<Texture2D>($"Art/arena-floor-stage{stage}") != null) && Enumerable.Range(1, 3).All(stage => Resources.Load<Texture2D>("Art/" + GameRules.BossVisual(stage)) != null) && GameRules.BossVisual(1) != GameRules.BossVisual(2) && GameRules.BossVisual(2) != GameRules.BossVisual(3), "Three stage arenas and all unique boss artworks load");
+        Check(newEnemyKinds.All(kind => Resources.Load<Texture2D>("Art/Enemies/" + GameRules.EnemyVisual(kind)) != null), "Six additional tier-two and tier-three enemy models load");
+        Check(Enumerable.Range(1, 3).All(stage => Resources.Load<Texture2D>($"Art/Arena/arena-floor-stage{stage}") != null) && Enumerable.Range(1, 3).All(stage => Resources.Load<Texture2D>("Art/Bosses/" + GameRules.BossVisual(stage)) != null) && GameRules.BossVisual(1) != GameRules.BossVisual(2) && GameRules.BossVisual(2) != GameRules.BossVisual(3), "Three stage arenas and all unique boss artworks load");
         Check(GameRules.BossVisual(1) == "starfall_boss_star_eater" && GameRules.BossVisual(3) == "starfall_boss_warden", "Bosses one and three swap their in-game models");
         Check(GameRules.EnemyTierForBossesDefeated(0) == 1 && GameRules.EnemyTierForBossesDefeated(1) == 2 && GameRules.EnemyTierForBossesDefeated(2) == 3 && GameRules.SelectEnemyKind(2, 280, .45f) == EnemyKind.PhaseLancer && GameRules.SelectEnemyKind(2, 280, .05f) == EnemyKind.NovaReaver, "Later enemy tiers retain earlier enemies and add new elite families");
         Check(GameRules.BossIntermissionSeconds(1) >= 120 && GameRules.BossIntermissionSeconds(2) >= 150, "Boss encounters are separated by long, playable minion phases");
@@ -116,7 +116,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
             yield return ValidateMobileUi(game);
         }
         var arenaFloor = (SpriteRenderer)typeof(GameBootstrap).GetField("arenaFloorRenderer", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(game);
-        Check(game.ArenaStage == 1 && arenaFloor.sprite.texture == Resources.Load<Texture2D>("Art/arena-floor-stage1") && FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None).Any(i => i.name == "Boss portrait" && i.preserveAspect), "Stage-one arena art and aspect-preserving boss portrait are wired into the HUD");
+        Check(game.ArenaStage == 1 && arenaFloor.sprite.texture == Resources.Load<Texture2D>("Art/Arena/arena-floor-stage1") && FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None).Any(i => i.name == "Boss portrait" && i.preserveAspect), "Stage-one arena art and aspect-preserving boss portrait are wired into the HUD");
         var pilotModel = game.Player.GetComponentsInChildren<SpriteRenderer>().FirstOrDefault(r => r.name == "Pilot model");
         Check(pilotModel != null && pilotModel.sprite == game.GetSprite("pilot_sprite_rin") && pilotModel.sprite.texture.width == 512, "Selected pilot uses her distinct in-game sprite model");
         var weaponSlotIcons = FindObjectsByType<Image>(FindObjectsSortMode.None).Where(i => i.name == "Weapon glyph").ToArray();
@@ -368,7 +368,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
             Invoke(game, "ChooseUpgrade", 0); yield return null;
             Check(Mathf.Approximately(game.Stats.Damage, damageBeforeReward * 1.20f) && Mathf.Approximately(game.Stats.Haste, hasteBeforeReward * 1.15f) && Mathf.Approximately(game.Stats.Crit, critBeforeReward + .20f) && game.Stats.MaxHealth == maxHealthBeforeReward && game.Player.Health == game.Player.MaxHealth, "Overload core multiplies final damage +20%, haste +15% and adds +20% critical chance");
             Check(game.BossTransitionRemaining >= GameRules.StageTwoIntermission - 1 && game.BossesDefeated == 1, "Core selection begins a two-minute tier-two minion phase");
-            Check(game.ArenaStage == 2 && arenaFloor.sprite.texture == Resources.Load<Texture2D>("Art/arena-floor-stage2"), "Defeating the first boss switches to the stage-two arena art");
+            Check(game.ArenaStage == 2 && arenaFloor.sprite.texture == Resources.Load<Texture2D>("Art/Arena/arena-floor-stage2"), "Defeating the first boss switches to the stage-two arena art");
             Invoke(game, "SpawnEnemy", EnemyKind.Grunt, testMobPosition);
             var stageTwoMob = game.Nearby(testMobPosition, .05f).FirstOrDefault();
             int stageTwoMobHealth = stageTwoMob != null ? stageTwoMob.MaxHealth : 0;
@@ -401,7 +401,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
             Invoke(game, "ChooseUpgrade", 0); yield return null;
             Check(game.Stats.MaxHealth == phoenixHealthBefore + 60 && Mathf.Approximately(game.Stats.Armor, phoenixArmorBefore + .15f) && Mathf.Approximately(game.Stats.Speed, phoenixSpeedBefore * 1.18f) && Mathf.Approximately(game.Stats.Regeneration, phoenixRegenBefore + 1f) && Mathf.Approximately(game.Stats.DamageImmunityChance, phoenixImmunityBefore + .30f), "Phoenix protocol grants all five specified defensive and mobility effects");
             Check(game.BossTransitionRemaining >= GameRules.StageThreeIntermission - 1, "Second core selection begins a two-and-a-half-minute tier-three minion phase");
-            Check(game.ArenaStage == 3 && arenaFloor.sprite.texture == Resources.Load<Texture2D>("Art/arena-floor-stage3"), "Defeating the second boss switches to the stage-three arena art");
+            Check(game.ArenaStage == 3 && arenaFloor.sprite.texture == Resources.Load<Texture2D>("Art/Arena/arena-floor-stage3"), "Defeating the second boss switches to the stage-three arena art");
             Invoke(game, "SpawnEnemy", EnemyKind.Grunt, testMobPosition);
             var stageThreeMob = game.Nearby(testMobPosition, .05f).FirstOrDefault();
             Check(stageThreeMob != null && stageThreeMob.MaxHealth > stageTwoMobHealth && stageThreeMob.MaxHealth <= Mathf.CeilToInt(stageTwoMobHealth * 1.9f), "Stage three minions grow steadily again");
@@ -461,19 +461,15 @@ public sealed class RunSmokeCheck : MonoBehaviour
         }
         var viewport = Camera.main.pixelRect;
         var telemetry = Bounds(Node("Top telemetry"));
-        var stagePanel = Bounds(Node("Stage telemetry"));
         var boss = Bounds(Node("Boss health"));
-        var pause = Bounds(Node("Pause touch button"));
         var dash = Bounds(Node("Dash touch button"));
-        Check(!boss.Overlaps(telemetry), "Mobile boss bar stays clear of the smaller top HUD panel");
-        Check(!stagePanel.Overlaps(boss) && !stagePanel.Overlaps(telemetry) && !stagePanel.Overlaps(pause), "Stage panel stays clear of boss bar, clock and pause");
-        Check(!pause.Overlaps(dash) && pause.xMax > viewport.xMax - viewport.width * .08f && pause.yMax > viewport.yMax - viewport.height * .30f, "Pause target sits in the upper-right area clear of dash");
-        foreach (string name in new[] { "Movement joystick", "Dash touch button", "Pause touch button", "Vitals" })
+        Check(!boss.Overlaps(telemetry), "Mobile boss bar stays clear of the merged top HUD panel");
+        Check(telemetry.xMax > viewport.xMax - viewport.width * .08f, "Merged time/stage panel sits in the upper-right corner");
+        foreach (string name in new[] { "Movement joystick", "Dash touch button", "Vitals", "Top telemetry" })
         {
             var bounds = Bounds(Node(name));
             Check(viewport.Contains(bounds.min) && viewport.Contains(bounds.max), "Mobile viewport contains " + name);
         }
-        Check(pause.height / viewport.height >= .09f, "Pause target is large enough for a phone screen");
         var stick = Node("Movement joystick").GetComponent<VirtualJoystick>();
         var stickRect = (RectTransform)stick.transform;
         Vector2 StickPoint(Vector2 local) => RectTransformUtility.WorldToScreenPoint(Camera.main, stickRect.TransformPoint(local));
@@ -489,8 +485,8 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(game.TouchMove == Vector2.zero, "Releasing stick stops movement");
         stick.OnPointerDown(pointer);
         Effects.Burst(game.Player.transform.position, GameRules.Pink, 36, .18f);
-        Node("Pause touch button").GetComponent<MobileActionButton>().OnPointerDown(second);
-        Check(game.State == RunState.Paused && game.TouchMove == Vector2.zero, "Touch pause opens menu and clears movement");
+        game.RequestPause(); yield return null;
+        Check(game.State == RunState.Paused && game.TouchMove == Vector2.zero, "Pause action opens menu and clears movement");
         yield return Capture("10-phone-pause");
         Invoke(game, "Resume");
     }
