@@ -2,13 +2,11 @@
 
 Unity 6 制作的二次元科幻风 2D 俯视角生存肉鸽。移动躲避逐层升级的敌潮、自动攻击、拾取星尘升级、组合武器，并在三个相隔较远的阶段击败守关 Boss。
 
-## 下载游玩（无需安装 Unity）
+## 下载游玩
 
 前往 [Releases](https://github.com/Lsm12321/Starfall/releases) 下载最新的 Windows 版压缩包，解压后双击 `Starfall.exe` 即可开始游戏。
 
-- 系统要求：Windows 10 / 11 64 位、支持 DirectX 11 的显卡、约 200 MB 磁盘空间。
 - 解压后必须保留整个文件夹，`Starfall_Data` 等文件要与 `Starfall.exe` 放在一起，不能只单独取出 exe。
-- 无需安装 Unity、无需联网、无需管理员权限。压缩包内附 `运行说明.txt`，含操作方式与存档位置。
 - 仓库只包含 Unity 工程源码，不含构建产物。需要从源码运行或自行打包，见下方「打开与构建工程」。
 
 ## 操作方式
@@ -43,7 +41,7 @@ Unity 6 制作的二次元科幻风 2D 俯视角生存肉鸽。移动躲避逐�
 - 星尘经验、医疗掉落、补给宝箱、冲刺与受伤无敌时间、暴击数字、电弧和警示圈。
 - 03:00 迎战 Boss 1「噬影守望者」。选择核心后进入至少 02:00 的二级敌潮，再迎战 Boss 2「回响先驱」；其会绕场移动、预告后跃迁并交替释放扇形弹幕和旋转弹幕。再次选择核心后进入至少 02:30 的三级敌潮，再迎战 Boss 3「星蚀巨兽」；它是不可移动的巨型场景级 Boss，以覆盖范围更大的星蚀弹幕和核心脉冲攻击玩家。每位 Boss 有两阶段攻击，击杀时触发慢动作、镜头震动、能量爆发与专属音效。
 - 前两位 Boss 击杀后可选择一项核心强化并恢复满血；第三位 Boss 击杀后直接进入胜利结算，不再弹出核心选择页。超载核心提供最终伤害 +20%、最终攻速 +15%、暴击率 +20%；凤凰协议提供生命上限 +60、护甲 +15%、移速 +18%、每秒回复 +1 和受击时 30% 免伤概率；星核共鸣提供暴击率 +30%、暴击伤害 +50%，且暴击率超过 100% 后每溢出 1% 增加 2% 暴击伤害。每种核心一局只能获得一次，已获得的核心会从后续奖励中移除。
-- 五名驾驶员和三名 Boss 均以 Blender 可编辑 3D 模型制作并渲染为局内透明精灵；驾驶员服装、发型、配色和武器根据角色档案与人设立绘定制。Boss 头像随战斗阶段显示在 HUD，三个阶段使用各自的竞技场美术。3D 模型源文件已移出 `Assets`，备份在 `work/removed-art-source-2026-11-01.zip`。
+- 五名驾驶员和三名 Boss 均以 Blender 可编辑 3D 模型制作并渲染为局内透明精灵；驾驶员服装、发型、配色和武器根据角色档案与人设立绘定制。Boss 头像随战斗阶段显示在 HUD，三个阶段使用各自的竞技场美术。
 - 主菜单、角色档案、中文升级说明、血条、经验条、武器栏、冷却条、Boss 血条、暂停、胜负结算、再次远征、最佳击杀和通关次数保存；原创程序音效可静音。
 
 ## 打开与构建工程
@@ -52,40 +50,7 @@ Unity 6 制作的二次元科幻风 2D 俯视角生存肉鸽。移动躲避逐�
 
 Windows 打包：Unity 菜单 `Starfall > Build Windows game`。自动生成的 Main 场景不要放置需要保留的手工关卡对象。
 
-## 美术素材
-
-`Assets/Resources/Art` 已按用途分类：`Arena`（三张阶段竞技场）、`Bosses`（三名 Boss）、`Characters/Portraits`（五张角色立绘）、`Characters/Sprites`（五名驾驶员局内精灵）、`Enemies`（九种敌人）、`UI/Icons`（19 个强化图标）和 `UI/Illustrations`（菜单插图）。已删除未使用的 `starfall_hero`、`starfall_boss`、`stat_medical`、旧 `arena-floor` 以及 `.blend1` 自动备份和 `__pycache__`。
-
-`Assets/Icon` 只保留构建用 `AppIcon.png`，被 Windows 与 Android 打包脚本引用，不能删除。
-
-3D `.blend` 源文件和 Blender 生成脚本不属于运行时资源，也未参与 APK 构建，现已移出 `Assets`，备份在 `work/removed-art-source-2026-11-01.zip`。游戏运行和出包不依赖它们；若以后需要继续编辑模型，解压备份后放回任意非 `Resources` 目录即可。
-
-角色立绘由 ComfyUI 生成。ComfyUI 正在本机 `127.0.0.1:8188` 运行且已有 `animagine-xl-4.0.safetensors` 时，执行：
-
-```powershell
-python Assets/ComfyUI/generate_pilots.py
-```
-
-脚本将以固定 seed 顺序生成五张 768×1152 立绘，写入 `Assets/Resources/Art/Characters/Portraits`；提示词、负面提示和 seed 同时保存在 `Assets/ComfyUI/pilot_prompts.json`。游戏运行不依赖 ComfyUI。
-
-强化图标脚本仍在 `Assets/ComfyUI/create_gameplay_art.py`，输出到 `Assets/Resources/Art/UI/Icons`；如需重新渲染驾驶员、敌人和 Boss 模型，请先从上述备份包恢复 Blender 工程。
-
-主菜单插图工作流在 `Assets/ComfyUI/arena_api.json`，可用 `python Assets/ComfyUI/generate_arena.py` 重新生成候选图。
 ## 验证
 
 Unity 6 Windows 开发构建和自动运行回归覆盖五套 Blender 角色精灵、敌种资源、三张阶段竞技场及 Boss HUD 专属头像、生命扩容、武器选择、核心不可重复规则与升级效果；回归会快进至三名 Boss，验证阶段美术切换、两次长敌潮间隔、敌种阶梯保留与新增、二号 Boss 跃迁、三号 Boss 固定不动、唯一核心奖励、最终结算和无运行时异常。回归不代表五名角色完整长局的胜率模拟。
 
-截图、测试报告、Windows 可运行版和 Unity 工程压缩包位于 `outputs`。
-
-## Android 横屏版
-
-Android 适配包位于 `outputs/StarfallAndroid/Starfall.apk`，支持 Android 8.0（API 26）及以上 ARM64 设备。游戏锁定横屏，逻辑视口固定 16:9；超宽屏两侧以黑边补齐。
-
-- 左下轮盘移动，右下“冲刺”按钮，武器自动攻击；右上角暂停按钮，Android 返回键也可暂停/继续。
-- 手机主菜单、驾驶员档案选择、升级、暂停、胜负结算和角色状态页均使用独立触控布局与更大的点按区域。
-- 局内移除右上武器栏，暂停键放在右上角；左上计时和生命面板略微缩小，让战斗视野更开阔。
-- 战斗时显示触摸控件，进入升级、暂停、结算界面自动隐藏。
-- Android 出包工程位于 `D:\deepseek harness\StarfallAndroid`（Unity 2022.3.62f3c1），源码改动同步自本工程。
-- 安装、操作、构建与验证说明见 `outputs/StarfallAndroid/README_安装与操作.txt`。
-- 战斗 HUD 在手机端按 1240×697.5 参考匹配屏幕高度；局内竞技场横向范围由 28 扩展到 34 个世界单位。
-- 局内背景地板延伸到 36 个世界单位并保持原画宽高比，16:9 手机满屏显示。
