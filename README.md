@@ -2,13 +2,16 @@
 
 Unity 6 制作的二次元科幻风 2D 俯视角生存肉鸽。移动躲避逐层升级的敌潮、自动攻击、拾取星尘升级、组合武器，并在三个相隔较远的阶段击败守关 Boss。
 
-## 直接游玩
+## 下载游玩（无需安装 Unity）
 
-克隆或解压源码后，双击仓库根目录的 `启动游戏.bat` 即可。它会依次查找 Unity `6000.0.47f1`、在需要时构建 `outputs/StarfallWindows/Starfall.exe`、然后启动游戏。首次运行需要完整导入资源并构建，通常耗时数分钟；构建完成后再次运行会直接启动，只有当 `Assets`、`Packages`、`ProjectSettings` 中的文件比上次构建更新时才会重建。
+前往 [Releases](https://github.com/Lsm12321/Starfall/releases) 下载最新的 Windows 版压缩包，解压后双击 `Starfall.exe` 即可开始游戏。
 
-- 参数：`--rebuild` 强制重建，`--no-launch` 只构建不启动，`--help` 查看用法。
-- 构建需要安装 Unity `6000.0.47f1`。脚本按 `UNITY_EDITOR` 环境变量、Unity Hub 编辑器清单（`editors-v2.json` / `secondaryInstallPath.json`）、常见安装目录的顺序查找，并校验 `ProductVersion`，因此不会误用其他 Unity 版本（例如同机安装的 `2022.3.62f3c1`）。未找到该版本时会明确提示，并建议改用已发布的构建产物。
-- 已构建的产物可独立分发：打包整个 `outputs/StarfallWindows` 文件夹（含 `Starfall_Data`、`UnityPlayer.dll` 等），双击其中的 `Starfall.exe` 即可运行，无需源码或 Unity。
+- 系统要求：Windows 10 / 11 64 位、支持 DirectX 11 的显卡、约 200 MB 磁盘空间。
+- 解压后必须保留整个文件夹，`Starfall_Data` 等文件要与 `Starfall.exe` 放在一起，不能只单独取出 exe。
+- 无需安装 Unity、无需联网、无需管理员权限。压缩包内附 `运行说明.txt`，含操作方式与存档位置。
+- 仓库只包含 Unity 工程源码，不含构建产物。需要从源码运行或自行打包，见下方「打开与构建工程」。
+
+## 操作方式
 
 - 主菜单点击“选择驾驶员”，在角色档案中查看立绘、人设、武器和被动，再点击“开始远征”。
 - WASD / 方向键移动；空格向当前移动方向冲刺，短暂无敌，冷却 3.2 秒。
@@ -48,8 +51,6 @@ Unity 6 制作的二次元科幻风 2D 俯视角生存肉鸽。移动躲避逐�
 使用 Unity Hub 打开本目录并选择 Unity `6000.0.47f1`。等待导入后打开 `Assets/Scenes/Main.unity` 并点击 Play，再选择驾驶员开始游戏。项目使用内置渲染管线和旧输入接口，无需配置预制体或 UI 引用。
 
 Windows 打包：Unity 菜单 `Starfall > Build Windows game`。自动生成的 Main 场景不要放置需要保留的手工关卡对象。
-
-命令行构建（无需打开编辑器，等价于菜单项）：`启动游戏.bat --no-launch --rebuild`。
 
 ## 美术素材
 
