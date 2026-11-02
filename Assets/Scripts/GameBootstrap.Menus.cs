@@ -15,6 +15,8 @@ public partial class GameBootstrap
         BuildModal(state == RunState.Victory, state == RunState.Defeat);
     }
 
+    private float MobileMenuWidth => touchControls ? Mathf.Max(1440f, 810f * Screen.width / Mathf.Max(1, Screen.height)) : 1440f;
+
     private void BuildMenu()
     {
         lastWave = 1;
@@ -26,6 +28,7 @@ public partial class GameBootstrap
             var fitter = art.gameObject.AddComponent<AspectRatioFitter>();
             fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
             fitter.aspectRatio = illustration.rect.width / illustration.rect.height;
+            if (touchControls) art.rectTransform.localScale = Vector3.one * 1.08f;
         }
         Art(panel, "Scrim base", UiKit.Solid, new Color(.012f, .02f, .032f, .96f), new Vector2(0, 0), new Vector2(.3f, 1), AnchorCL, Vector2.zero, Vector2.zero);
         Art(panel, "Scrim fade", UiKit.GradientLeft, new Color(.012f, .02f, .032f, .96f), new Vector2(.3f, 0), new Vector2(.82f, 1), AnchorCL, Vector2.zero, Vector2.zero);
@@ -39,12 +42,12 @@ public partial class GameBootstrap
 
         if (touchControls)
         {
-            panel = Node(panel, "Phone menu layout", AnchorCC, Vector2.zero, new Vector2(1440, 810));
+            panel = Node(panel, "Phone menu layout", AnchorCC, Vector2.zero, new Vector2(MobileMenuWidth, 810));
             panel.localScale = Vector3.one * .86f;
         }
 
         var left = Node(panel, "Menu left", AnchorTL, Vector2.zero, new Vector2(1440, 810));
-        left.localScale = Vector3.one * (touchControls ? 1.06f : 1.04f);
+        left.localScale = Vector3.one * (touchControls ? 1.10f : 1.04f);
 
         Art(left, "Title glow", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .13f), AnchorTL, new Vector2(56, -96), new Vector2(720, 320));
         Art(left, "Kicker mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .95f), AnchorTL, new Vector2(97, -106), new Vector2(8, 8));
@@ -362,7 +365,7 @@ public partial class GameBootstrap
         Art(panel, "Scanlines", UiKit.Scanlines, new Color(0, 0, 0, .4f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
 
         var archive = Node(panel, "Phone archive layout", AnchorCC, new Vector2(0, 26f), new Vector2(1440, 810));
-        if (touchControls) archive.localScale = Vector3.one * .82f;
+        if (touchControls) archive.localScale = Vector3.one * .90f;
         panel = archive;
 
         Art(panel, "Header halo", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .10f), AnchorTL, new Vector2(240, -40), new Vector2(640, 240));

@@ -103,7 +103,7 @@ public sealed class PlayerActor : MonoBehaviour
             timers[1] = GameRules.ScatterInterval(scatter, stats.Haste);
             bool scatterEvolved = stats.EvolvedWeapons[1];
             int count = GameRules.ScatterPellets(scatter) + (scatterEvolved ? 2 : 0);
-            float spread = scatterEvolved ? 11f : 8f;
+            float spread = GameRules.ScatterSpread;
             float power = scatterEvolved ? GameRules.ScatterDamage(scatter) * 1.3f : GameRules.ScatterDamage(scatter);
             int scatterPierce = 2 + stats.Pierce;
             // Longer reach so the wider evolved spread still connects at mid range.
@@ -298,8 +298,8 @@ public sealed class EnemyActor : MonoBehaviour
             default:
                 MaxHealth = BossStage == 2 ? 27000 : BossStage == 3 ? 120000 : 3450;
                 speed = BossStage == 2 ? 1.2f : BossStage == 3 ? 0f : 1.2f;
-                Radius = BossStage == 2 ? 1.85f : BossStage == 3 ? 2.75f : 1.35f; xp = 0;
-                touchDamage = Mathf.RoundToInt((24 + (BossStage - 1) * 9) * (BossStage >= 3 ? .85f : 1f)); scale = BossStage == 2 ? 1.55f : BossStage == 3 ? 1.72f : 1.2f;
+                Radius = BossStage == 2 ? 1.96f : BossStage == 3 ? 2.75f : 1.43f; xp = 0;
+                touchDamage = Mathf.RoundToInt((24 + (BossStage - 1) * 9) * (BossStage >= 3 ? .85f : 1f)); scale = BossStage == 2 ? 1.65f : BossStage == 3 ? 1.72f : 1.28f;
                 spawnDelay = BossStage == 2 ? 1.6f : BossStage == 3 ? 2.1f : 1.1f;
                 fireTimer = BossStage == 1 ? 1.5f : BossStage == 2 ? 1.55f : 1.35f;
                 ringTimer = BossStage == 1 ? 4.2f : BossStage == 2 ? 3.3f : 5.4f;
@@ -630,6 +630,7 @@ public sealed class EnemyActor : MonoBehaviour
 public sealed class Projectile : MonoBehaviour
 {
     private static readonly HashSet<Projectile> active = new HashSet<Projectile>();
+    private static readonly Color HostileShotColor = new Color(1f, .18f, .2f, 1f);
     private Vector2 velocity;
     private int damage, remaining;
     private float lifetime, radius;
@@ -644,7 +645,7 @@ public sealed class Projectile : MonoBehaviour
     {
         var obj = new GameObject(hostile ? "Hostile bolt" : "Energy bolt"); obj.transform.position = position;
         obj.transform.localScale = new Vector3(size, hostile ? size : size * lengthScale, 1); obj.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90);
-        var renderer = obj.AddComponent<SpriteRenderer>(); renderer.sprite = GameBootstrap.Game.Shape(hostile ? "circle" : (projectileShape ?? "diamond")); renderer.color = tint; renderer.sortingOrder = 20;
+        var renderer = obj.AddComponent<SpriteRenderer>(); renderer.sprite = GameBootstrap.Game.Shape(hostile ? "circle" : (projectileShape ?? "diamond")); renderer.color = hostile ? HostileShotColor : tint; renderer.sortingOrder = 20;
         if (!hostile && (projectileShape == "cryo_lance" || projectileShape == "cryo_lance_evolved"))
         {
             var glow = new GameObject(projectileShape == "cryo_lance_evolved" ? "Evolved glacial lance halo" : "Prismatic lance glow"); glow.transform.SetParent(obj.transform, false); glow.transform.localScale = projectileShape == "cryo_lance_evolved" ? new Vector3(2.25f, 1.22f, 1) : new Vector3(1.8f, 1.02f, 1); var glowRenderer = glow.AddComponent<SpriteRenderer>(); glowRenderer.sprite = renderer.sprite; glowRenderer.color = projectileShape == "cryo_lance_evolved" ? new Color(.64f, .98f, 1f, .3f) : new Color(.45f, .95f, 1f, .24f); glowRenderer.sortingOrder = 19;

@@ -31,6 +31,7 @@ public static class StarfallBuild
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(scenePath, true) };
         PlayerSettings.companyName = "Starfall Studio";
         PlayerSettings.productName = "Starfall - The Last Light";
+        PlayerSettings.bundleVersion = "1.1";
         PlayerSettings.defaultScreenWidth = 1440;
         PlayerSettings.defaultScreenHeight = 810;
         PlayerSettings.resizableWindow = true;

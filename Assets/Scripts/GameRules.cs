@@ -250,9 +250,10 @@ public static class GameRules
     public const int PulsePierce = 1;
     public static int PulseEchoDamage(int level) => WeaponRankDamage(8, 3, level);
     public static float ScatterInterval(int level, float haste) => Mathf.Max(.55f, (1.55f - level * .10f - level * Mathf.Max(0, level - 1) * .010f) / haste);
+    public const float ScatterSpread = 9f;
     private static readonly int[] ScatterPelletValues = { 3, 3, 4, 4, 5 };
     public static int ScatterPellets(int level) => ValueAt(ScatterPelletValues, level - 1);
-    private static readonly int[] ScatterDamageValues = { 16, 20, 22, 28, 30 };
+    private static readonly int[] ScatterDamageValues = { 16, 18, 20, 22, 24 };
     public static int ScatterDamage(int level) => ValueAt(ScatterDamageValues, level - 1);
     public static int OrbitBlades(int level) => 3 + Mathf.Max(0, (level - 1) / 2);
     public static int OrbitDamage(int level) => WeaponRankDamage(20, 5, level);
@@ -267,7 +268,7 @@ public static class GameRules
     public static float CryoProjectileSpeed(int level) => 18f + Mathf.Clamp(level - 1, 0, MaxWeaponRank - 1) * 1.1f;
     public const int CryoPierce = 4;
     public static float CryoProjectileLength(int level) => 4.6f + Mathf.Clamp(level - 1, 0, MaxWeaponRank - 1) * .12f;
-    private static readonly int[] CryoDamageValues = { 30, 40, 52, 65, 80 };
+    private static readonly int[] CryoDamageValues = { 35, 40, 52, 65, 80 };
     public static int CryoDamage(int level) => ValueAt(CryoDamageValues, level - 1);
     public static int CryoEchoDamage(int level) => WeaponRankDamage(15, 4, level);
     public static float CryoSlowDuration(int level, float baseDuration) => baseDuration + Mathf.Clamp(level - 1, 0, MaxWeaponRank - 1) * .22f;

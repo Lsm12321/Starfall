@@ -48,12 +48,13 @@ public sealed class RunSmokeCheck : MonoBehaviour
     {
         yield return null;
         var camera = Camera.main; var canvas = FindFirstObjectByType<Canvas>();
-        var target = new RenderTexture(1440, 810, 24);
+        int width = Mathf.Max(1, Screen.width), height = Mathf.Max(1, Screen.height);
+        var target = new RenderTexture(width, height, 24);
         var oldMode = canvas.renderMode; var oldCamera = canvas.worldCamera; int oldSorting = canvas.sortingOrder;
         canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = camera; canvas.planeDistance = 1; canvas.sortingOrder = 1000;
         camera.targetTexture = target; Canvas.ForceUpdateCanvases(); camera.Render();
         var previous = RenderTexture.active; RenderTexture.active = target;
-        var image = new Texture2D(1440, 810, TextureFormat.RGB24, false); image.ReadPixels(new Rect(0, 0, 1440, 810), 0, 0); image.Apply();
+        var image = new Texture2D(width, height, TextureFormat.RGB24, false); image.ReadPixels(new Rect(0, 0, width, height), 0, 0); image.Apply();
         File.WriteAllBytes(Path.Combine(folder, name + ".png"), image.EncodeToPNG());
         RenderTexture.active = previous; camera.targetTexture = null; canvas.renderMode = oldMode; canvas.worldCamera = oldCamera; canvas.sortingOrder = oldSorting;
         Destroy(image); target.Release(); Destroy(target);
@@ -224,8 +225,9 @@ public sealed class RunSmokeCheck : MonoBehaviour
         float cryoMax = GameRules.CryoDamage(GameRules.MaxWeaponRank) * 1.4f / GameRules.CryoInterval(GameRules.MaxWeaponRank, 1);
         float bladeStart = GameRules.OrbitDpsBudget(1);
         float bladeMax = GameRules.OrbitDpsBudget(GameRules.MaxWeaponRank);
-        Check(GameRules.CryoDamage(1) == 30 && GameRules.CryoInterval(1, 1) < 1.5f && GameRules.CryoSlowDuration(GameRules.MaxWeaponRank, 1.1f) > GameRules.CryoSlowDuration(1, 1.1f) && GameRules.CryoEvolutionTickDamage(1) == 3 && GameRules.CryoEvolutionTickDamage(5) == 5 && GameRules.CryoEvolutionTickInterval == .25f && GameRules.CryoProjectileSpeed(1) >= 18f && GameRules.CryoPierce == 4 && GameRules.CryoProjectileLength(1) > 4f && GameRules.OrbitBlades(1) == 3 && GameRules.OrbitDamage(1) == 20 && GameRules.ScatterDamage(1) == 16 && GameRules.PulseDamage(1) == 18,
+        Check(GameRules.CryoDamage(1) == 35 && GameRules.CryoInterval(1, 1) < 1.5f && GameRules.CryoSlowDuration(GameRules.MaxWeaponRank, 1.1f) > GameRules.CryoSlowDuration(1, 1.1f) && GameRules.CryoEvolutionTickDamage(1) == 3 && GameRules.CryoEvolutionTickDamage(5) == 5 && GameRules.CryoEvolutionTickInterval == .25f && GameRules.CryoProjectileSpeed(1) >= 18f && GameRules.CryoPierce == 4 && GameRules.CryoProjectileLength(1) > 4f && GameRules.OrbitBlades(1) == 3 && GameRules.OrbitDamage(1) == 20 && GameRules.ScatterDamage(1) == 16 && GameRules.PulseDamage(1) == 18,
             "Requested sniper-style cryo weapon damage, fire rate, projectile length, speed and penetration are applied");
+        Check(Enumerable.Range(2, 4).All(level => GameRules.ScatterDamage(level) - GameRules.ScatterDamage(level - 1) == 2), "Ember Scatter gains exactly two damage per rank");
         Check(GameRules.MaxWeaponRank == 5 && pulseMax / pulseStart < 8.5f && scatterMax / scatterStart < 20f && arcMax / arcStart < 13f && cryoMax / cryoStart < 9f && bladeMax / bladeStart < 6f && GameRules.ArcDamage(1) * 1.25f >= 22 && GameRules.OrbitDamage(1) >= 20,
             "All five signature weapon rank curves support the extended level cap");
         Check(GameRules.MaxUpgradeRank == 7 && GameRules.Describe(5, new RunStats()).Description.Contains("+25%") && GameRules.Describe(6, new RunStats()).Description.Contains("+15%") && GameRules.Describe(7, new RunStats()).Description.Contains("+10%") && GameRules.Describe(8, new RunStats()).Description.Contains("+20%") && GameRules.Describe(10, new RunStats()).Description.Contains("+10%") && GameRules.Describe(12, new RunStats()).Description.Contains("1.00"),

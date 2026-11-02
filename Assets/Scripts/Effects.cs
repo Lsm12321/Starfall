@@ -86,9 +86,11 @@ public static class Effects
             obj.AddComponent<FloatingLabel>();
         }
         else obj.SetActive(true);
-        obj.transform.SetParent(canvas.transform, false); obj.transform.SetAsFirstSibling();
-        var rect = obj.GetComponent<RectTransform>(); rect.sizeDelta = new Vector2(90, 32); rect.localScale = Vector3.one;
-        var label = obj.GetComponent<Text>(); label.font = LabelFont(); label.text = text; label.fontSize = heavy ? 19 : 13; label.alignment = TextAnchor.MiddleCenter; label.fontStyle = heavy ? FontStyle.Bold : FontStyle.Normal; label.color = tint; label.raycastTarget = false;
+        obj.transform.SetParent(canvas.transform, false); obj.transform.SetAsLastSibling();
+        var rect = obj.GetComponent<RectTransform>(); rect.sizeDelta = new Vector2(160, 36); rect.localScale = Vector3.one;
+        var label = obj.GetComponent<Text>(); label.font = LabelFont(); label.text = text; label.fontSize = heavy ? 20 : 15; label.alignment = TextAnchor.MiddleCenter; label.fontStyle = heavy ? FontStyle.Bold : FontStyle.Normal; label.color = tint; label.raycastTarget = false;
+        label.horizontalOverflow = HorizontalWrapMode.Overflow; label.verticalOverflow = VerticalWrapMode.Overflow;
+        var shadow = obj.GetComponent<Shadow>(); if (shadow == null) shadow = obj.AddComponent<Shadow>(); shadow.effectColor = new Color(0, 0, 0, .7f); shadow.effectDistance = new Vector2(1f, -1f);
         obj.GetComponent<FloatingLabel>().Setup(position);
     }
 
@@ -377,14 +379,22 @@ public sealed class LineFade : MonoBehaviour
 
 public sealed class FloatingLabel : MonoBehaviour
 {
-    private Vector3 source; private RectTransform rect; private float age; private Camera cam;
-    public void Setup(Vector3 worldPosition) { source = worldPosition; rect = GetComponent<RectTransform>(); age = 0f; cam = Camera.main; }
+    private Vector3 source; private RectTransform rect, canvasRect; private Canvas labelCanvas; private float age; private Camera cam;
+    public void Setup(Vector3 worldPosition)
+    {
+        source = worldPosition; rect = GetComponent<RectTransform>(); age = 0f; cam = Camera.main;
+        labelCanvas = GetComponentInParent<Canvas>();
+        canvasRect = labelCanvas != null ? labelCanvas.transform as RectTransform : null;
+    }
     private void Update()
     {
         if (GameBootstrap.Game == null) { Effects.ReleaseLabel(gameObject); return; }
         if (cam == null) cam = Camera.main;
         if (cam == null) { Effects.ReleaseLabel(gameObject); return; }
-        age += Time.unscaledDeltaTime; Vector3 point = cam.WorldToScreenPoint(source + Vector3.up * age * .48f); rect.position = point;
+        age += Time.unscaledDeltaTime; Vector3 point = cam.WorldToScreenPoint(source + Vector3.up * age * .48f);
+        if (canvasRect != null && RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, point, labelCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : labelCanvas.worldCamera, out Vector2 local))
+            rect.anchoredPosition = local;
+        else rect.position = point;
         var label = GetComponent<Text>(); label.color = new Color(label.color.r, label.color.g, label.color.b, Mathf.Clamp01((.75f - age) * 4));
         if (age > .75f) Effects.ReleaseLabel(gameObject);
     }

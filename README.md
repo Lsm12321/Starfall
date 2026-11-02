@@ -50,6 +50,18 @@ Unity 6 制作的二次元科幻风 2D 俯视角生存肉鸽。移动躲避逐�
 
 Windows 打包：Unity 菜单 `Starfall > Build Windows game`。自动生成的 Main 场景不要放置需要保留的手工关卡对象。
 
+## 美术素材
+
+`Assets/Resources/Art` 已按用途分类：`Arena`（三张阶段竞技场）、`Bosses`（三名 Boss）、`Characters/Portraits`（五张角色立绘）、`Characters/Sprites`（五名驾驶员局内精灵）、`Enemies`（九种敌人）、`UI/Icons`（19 个强化图标）和 `UI/Illustrations`（菜单插图），共 45 张运行时 PNG。
+
+`Assets/Icon/AppIcon.png` 是 Windows 与 Android 打包脚本引用的启动图标，不能删除。
+
+Blender `.blend` 源文件及生成脚本、ComfyUI 工作流及提示词均不属于运行时资源，也不参与 APK 打包，已移出 `Assets` 备份：
+
+- `work/removed-art-source-2026-11-01.zip`
+- `work/removed-comfyui-2026-11-02.zip`
+
+游戏运行和出包不依赖这些源文件；需要继续编辑模型或重新生成美术时，解压对应备份即可。
 ## 验证
 
 Unity 6 Windows 开发构建和自动运行回归覆盖五套 Blender 角色精灵、敌种资源、三张阶段竞技场及 Boss HUD 专属头像、生命扩容、武器选择、核心不可重复规则与升级效果；回归会快进至三名 Boss，验证阶段美术切换、两次长敌潮间隔、敌种阶梯保留与新增、二号 Boss 跃迁、三号 Boss 固定不动、唯一核心奖励、最终结算和无运行时异常。回归不代表五名角色完整长局的胜率模拟。

@@ -4,11 +4,13 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// Mobile presentation: 16:9 viewport lock, virtual stick, dash trigger and
-// touch-friendly HUD refresh hooks. Desktop keyboard input stays available.
+// Mobile presentation: 20:9 viewport lock, virtual stick, dash trigger and
+// touch-friendly HUD refresh hooks. Desktop keeps the original 16:9 layout.
 public partial class GameBootstrap
 {
-    private const float LockedAspect = 16f / 9f;
+    private const float DesktopAspect = 16f / 9f;
+    private const float MobileAspect = 20f / 9f;
+    private float LockedAspect => touchControls ? MobileAspect : DesktopAspect;
     private bool touchControls;
     private Vector2 touchMove;
     private Camera letterboxCamera;
@@ -19,7 +21,7 @@ public partial class GameBootstrap
     private Text dashButtonState;
     private GameObject touchRoot;
     private CanvasScaler uiScaler;
-    private bool gameplayUiScale;
+    private bool gameplayUiScale = true;
 
     public bool TouchControls => touchControls;
     public Vector2 TouchMove => touchMove;
@@ -62,7 +64,7 @@ public partial class GameBootstrap
 
     private void InitializeMobilePresentation()
     {
-        var letterbox = new GameObject("16:9 letterbox");
+        var letterbox = new GameObject("Aspect letterbox");
         letterbox.transform.SetParent(transform, false);
         letterboxCamera = letterbox.AddComponent<Camera>();
         letterboxCamera.clearFlags = CameraClearFlags.SolidColor;
@@ -94,7 +96,7 @@ public partial class GameBootstrap
         if (gameplay == gameplayUiScale) return;
         gameplayUiScale = gameplay;
         uiScaler.referenceResolution = gameplay ? new Vector2(1240f, 697.5f) : new Vector2(1440f, 810f);
-        uiScaler.matchWidthOrHeight = gameplay ? 1f : .5f;
+        uiScaler.matchWidthOrHeight = gameplay ? 1f : (touchControls ? 1f : .5f);
         Canvas.ForceUpdateCanvases();
     }
 

@@ -120,10 +120,22 @@ public partial class GameBootstrap : MonoBehaviour
         if (FindFirstObjectByType<GameBootstrap>() == null) new GameObject("Starfall Game").AddComponent<GameBootstrap>();
     }
 
+    private static void ResetSaveForNewBuild()
+    {
+        string buildId = Application.version + "|" + (string.IsNullOrEmpty(Application.buildGUID) ? "no-guid" : Application.buildGUID);
+        if (PlayerPrefs.GetString("Starfall.SaveBuild", "") == buildId) return;
+        int muted = PlayerPrefs.GetInt("Starfall.Muted", 0);
+        PlayerPrefs.DeleteAll();
+        if (muted != 0) PlayerPrefs.SetInt("Starfall.Muted", muted);
+        PlayerPrefs.SetString("Starfall.SaveBuild", buildId);
+        PlayerPrefs.Save();
+    }
+
     private void Awake()
     {
         if (Game != null && Game != this) { Destroy(gameObject); return; }
         Game = this;
+        ResetSaveForNewBuild();
         InitializeMobileMode();
         AudioListener.volume = PlayerPrefs.GetInt("Starfall.Muted", 0) == 1 ? 0 : 1;
         var installed = new HashSet<string>(Font.GetOSInstalledFontNames());
