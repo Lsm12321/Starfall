@@ -43,11 +43,11 @@ public partial class GameBootstrap
         if (touchControls)
         {
             panel = Node(panel, "Phone menu layout", AnchorCC, Vector2.zero, new Vector2(MobileMenuWidth, 810));
-            panel.localScale = Vector3.one * .86f;
+            panel.localScale = Vector3.one * .90f;
         }
 
         var left = Node(panel, "Menu left", AnchorTL, Vector2.zero, new Vector2(1440, 810));
-        left.localScale = Vector3.one * (touchControls ? 1.10f : 1.04f);
+        left.localScale = Vector3.one * (touchControls ? 1.12f : 1.04f);
 
         Art(left, "Title glow", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .13f), AnchorTL, new Vector2(56, -96), new Vector2(720, 320));
         Art(left, "Kicker mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .95f), AnchorTL, new Vector2(97, -106), new Vector2(8, 8));
@@ -106,7 +106,7 @@ public partial class GameBootstrap
         if (touchControls)
         {
             panel = Node(panel, "Phone result layout", AnchorCC, Vector2.zero, new Vector2(1440, 810));
-            panel.localScale = Vector3.one * .86f;
+            panel.localScale = Vector3.one * (State == RunState.Paused ? .92f : .86f);
         }
         Art(panel, "Modal backing", UiKit.Soft, new Color(.026f, .047f, .067f, 1f), AnchorCC, Vector2.zero, new Vector2(1098, 638));
         var modal = Frame(panel, "Modal", AnchorCC, Vector2.zero, new Vector2(1100, 640), accent, 1f);
@@ -182,7 +182,7 @@ public partial class GameBootstrap
         else Cta(modal, "Play again", "再次探索  /  PLAY AGAIN", AnchorTC, new Vector2(0, -506), new Vector2(320, 48), accent, true, PlayAgain, 14);
         Cta(modal, "Back to title", "返回主菜单", AnchorTC, new Vector2(0, -566), new Vector2(320, 40), new Color(.45f, .57f, .64f), false, RestartRun, 12);
         Ct(modal, "ESC  " + (State == RunState.Paused ? "继续" : "返回标题"), 9, new Vector2(0, -608), new Vector2(300, 14), UiKit.TextMute, FontStyle.Bold);
-        AddUtilityButtons(panel);
+        if (State != RunState.Paused) AddUtilityButtons(panel);
     }
 
     private void StatTile(Transform parent, string name, string label, string value, float x, Color accent, float width = 168)
@@ -208,8 +208,15 @@ public partial class GameBootstrap
         var root = (RectTransform)sheetPanel.transform;
         Art(root, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .6f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
 
+        var sheetRoot = root;
+        if (touchControls)
+        {
+            sheetRoot = Node(root, "Phone sheet layout", AnchorCC, Vector2.zero, new Vector2(1440, 810));
+            sheetRoot.localScale = Vector3.one * 1.08f;
+        }
+
         Color accent = CurrentCharacter.Accent;
-        var card = Frame(root, "Pilot sheet frame", AnchorCC, Vector2.zero, new Vector2(touchControls ? 1120 : 1000, touchControls ? 680 : 620), accent, .97f);
+        var card = Frame(sheetRoot, "Pilot sheet frame", AnchorCC, Vector2.zero, new Vector2(touchControls ? 1120 : 1000, touchControls ? 680 : 620), accent, .97f);
         Lt(card, UiKit.Track("RUN STATUS  /  作战状态"), 10, new Vector2(30, -22), new Vector2(420, 16), UiKit.Alpha(accent, .95f), FontStyle.Bold);
         Rt(card, "C / ESC  关闭", 9, new Vector2(-30, -24), new Vector2(200, 14), UiKit.TextMute, FontStyle.Bold);
 
@@ -365,7 +372,7 @@ public partial class GameBootstrap
         Art(panel, "Scanlines", UiKit.Scanlines, new Color(0, 0, 0, .4f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
 
         var archive = Node(panel, "Phone archive layout", AnchorCC, new Vector2(0, 26f), new Vector2(1440, 810));
-        if (touchControls) archive.localScale = Vector3.one * .90f;
+        if (touchControls) archive.localScale = Vector3.one * .94f;
         panel = archive;
 
         Art(panel, "Header halo", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .10f), AnchorTL, new Vector2(240, -40), new Vector2(640, 240));

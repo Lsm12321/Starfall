@@ -236,7 +236,7 @@ public static class GameRules
     public static int MaxHealthHealAtRank(int rank) => ValueAt(MaxHealthHealValues, rank);
     public static float EvolutionDamageMultiplier(int weaponId, RunStats stats)
     { return stats != null && weaponId >= 0 && weaponId < stats.EvolvedWeapons.Length && stats.EvolvedWeapons[weaponId] ? 1.5f : 1f; }
-    public static float PulseInterval(int level, float haste) => Mathf.Max(.22f, (.53f - (level - 1) * .02f) / Mathf.Max(.1f, haste));
+    public static float PulseInterval(int level, float haste) => Mathf.Max(.22f, (.55f - (level - 1) * .02f) / Mathf.Max(.1f, haste));
     private static int WeaponRankDamage(int baseDamage, int rankGain, int level)
     {
         int rank = Mathf.Clamp(level, 1, MaxWeaponRank);
@@ -363,7 +363,37 @@ public static class GameRules
             if (stats.Weapons[i] == 0) newWeapons.Add(Describe(i, stats, UpgradeFlow.Weapon));
             else if (!stats.EvolvedWeapons[i]) newWeapons.Add(DescribeEvolution(i));
         }
+        var allCandidates = new List<UpgradeOption>(newWeapons);
         if (avoid != null && avoid.Count > 0) newWeapons.RemoveAll(option => avoid.Contains(option.Id));
+        if (newWeapons.Count == 0 && allCandidates.Count > 0)
+        {
+            // When every remaining weapon/evolution was already shown, a reroll
+            // can only reshuffle them. Rotate the previous order so the cards move.
+            newWeapons.AddRange(allCandidates);
+            if (allCandidates.Count > 1 && avoid != null && avoid.Count == allCandidates.Count)
+            {
+                var ordered = new List<UpgradeOption>();
+                foreach (int id in avoid)
+                {
+                    for (int i = 0; i < allCandidates.Count; i++)
+                    {
+                        if (allCandidates[i].Id != id) continue;
+                        ordered.Add(allCandidates[i]);
+                        break;
+                    }
+                }
+                if (ordered.Count == allCandidates.Count)
+                {
+                    UpgradeOption first = ordered[0];
+                    ordered.RemoveAt(0);
+                    ordered.Add(first);
+                    newWeapons.Clear();
+                    newWeapons.AddRange(ordered);
+                }
+            }
+            result.AddRange(newWeapons);
+            return result;
+        }
         while (newWeapons.Count > 0 && result.Count < 3)
         {
             int index = UnityEngine.Random.Range(0, newWeapons.Count);

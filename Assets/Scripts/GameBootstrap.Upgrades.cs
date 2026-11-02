@@ -9,6 +9,7 @@ public partial class GameBootstrap
         upgradePanel = NewUI<Image>("Upgrade choices", overlay).gameObject; Stretch((RectTransform)upgradePanel.transform);
         upgradePanel.GetComponent<Image>().color = new Color(.012f, .022f, .036f, .93f);
         var panel = (RectTransform)upgradePanel.transform;
+        if (touchControls) panel.localScale = Vector3.one * 1.06f;
         Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .6f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         upgradeHalo = Art(panel, "Halo", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .12f), AnchorTC, new Vector2(0, -90), new Vector2(1160, 540));
 

@@ -298,8 +298,8 @@ public sealed class EnemyActor : MonoBehaviour
             default:
                 MaxHealth = BossStage == 2 ? 27000 : BossStage == 3 ? 120000 : 3450;
                 speed = BossStage == 2 ? 1.2f : BossStage == 3 ? 0f : 1.2f;
-                Radius = BossStage == 2 ? 1.96f : BossStage == 3 ? 2.75f : 1.43f; xp = 0;
-                touchDamage = Mathf.RoundToInt((24 + (BossStage - 1) * 9) * (BossStage >= 3 ? .85f : 1f)); scale = BossStage == 2 ? 1.65f : BossStage == 3 ? 1.72f : 1.28f;
+                Radius = BossStage == 2 ? 2.08f : BossStage == 3 ? 2.75f : 1.50f; xp = 0;
+                touchDamage = Mathf.RoundToInt((24 + (BossStage - 1) * 9) * (BossStage >= 3 ? .85f : 1f)); scale = BossStage == 2 ? 1.75f : BossStage == 3 ? 1.72f : 1.35f;
                 spawnDelay = BossStage == 2 ? 1.6f : BossStage == 3 ? 2.1f : 1.1f;
                 fireTimer = BossStage == 1 ? 1.5f : BossStage == 2 ? 1.55f : 1.35f;
                 ringTimer = BossStage == 1 ? 4.2f : BossStage == 2 ? 3.3f : 5.4f;

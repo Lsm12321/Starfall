@@ -126,7 +126,7 @@ public partial class GameBootstrap
     private void UpdateMobileViewport()
     {
         ApplyAspectLock(false);
-        if (virtualJoystick != null && State != RunState.Playing) virtualJoystick.ResetInput();
+        if (virtualJoystick != null && State != RunState.Playing && State != RunState.Upgrade) virtualJoystick.ResetInput();
     }
 
     public void SetTouchMove(Vector2 value)
@@ -153,11 +153,13 @@ public partial class GameBootstrap
         touchRoot.transform.SetParent(hudRoot.transform, false);
         Stretch((RectTransform)touchRoot.transform);
 
-        // Bottom-left virtual stick.
-        var pad = Node(touchRoot.transform, "Movement joystick", AnchorBL, AnchorBL, AnchorCC, new Vector2(162f, 158f), new Vector2(236f, 236f));
+        // Bottom-left virtual stick. The touch zone is larger than the drawn stick.
+        var hitZone = Node(touchRoot.transform, "Movement joystick hit", AnchorBL, AnchorBL, AnchorCC, new Vector2(178f, 158f), new Vector2(360f, 360f));
+        var hitArea = Art(hitZone, "Hit area", UiKit.Solid, new Color(1f, 1f, 1f, .001f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        hitArea.raycastTarget = true;
+
+        var pad = Node(hitZone, "Movement joystick", AnchorCC, Vector2.zero, new Vector2(236f, 236f));
         pad.localScale = Vector3.one * 1.06f;
-        var padHit = Art(pad, "Touch area", UiKit.Ring, new Color(1f, 1f, 1f, .002f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        padHit.raycastTarget = true;
         Art(pad, "Stick glow", UiKit.Glow, new Color(.12f, .92f, .86f, .12f), AnchorCC, Vector2.zero, new Vector2(250f, 250f));
         Art(pad, "Stick base", UiKit.Dot, new Color(.018f, .06f, .082f, .7f), AnchorCC, Vector2.zero, new Vector2(214f, 214f));
         Art(pad, "Stick edge", UiKit.Ring, UiKit.Alpha(GameRules.Cyan, .38f), AnchorCC, Vector2.zero, new Vector2(216f, 216f));
@@ -171,7 +173,7 @@ public partial class GameBootstrap
         Art(knob, "Knob edge", UiKit.Ring, UiKit.Alpha(GameRules.Cyan, .92f), AnchorCC, Vector2.zero, new Vector2(92f, 92f));
         Art(knob, "Knob core", UiKit.Dot, new Color(1f, 1f, 1f, .6f), AnchorCC, Vector2.zero, new Vector2(10f, 10f));
 
-        virtualJoystick = pad.gameObject.AddComponent<VirtualJoystick>();
+        virtualJoystick = hitZone.gameObject.AddComponent<VirtualJoystick>();
         virtualJoystick.Init(this, knob, 84f, canvas);
 
         // Bottom-right dash action.
@@ -196,6 +198,26 @@ public partial class GameBootstrap
             new Vector2(0f, -24f), new Vector2(132f, 22f), GameRules.Cyan, FontStyle.Bold, uiFont);
         dashTouchButton = dash.gameObject.AddComponent<MobileActionButton>();
         dashTouchButton.Init(this, false);
+
+        // Character sheet shortcut, directly under the top-left vitals.
+        var sheet = Node(touchRoot.transform, "Open pilot sheet", AnchorTL, new Vector2(22f, -112f), new Vector2(96f, 44f));
+        var sheetBody = Art(sheet, "Fill", UiKit.Soft, new Color(.02f, .06f, .08f, .9f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        sheetBody.raycastTarget = true;
+        Fill(sheet, "Edge", UiKit.SoftEdge, UiKit.Alpha(GameRules.Cyan, .28f));
+        Art(sheet, "Mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .85f), AnchorTL, new Vector2(10f, -17f), new Vector2(7f, 7f));
+        Mc(sheet, "角色  /  C", 12, UiKit.TextMain, FontStyle.Bold);
+        var sheetButton = sheet.gameObject.AddComponent<Button>();
+        sheetButton.targetGraphic = sheetBody; sheetButton.transition = Selectable.Transition.None;
+        sheetButton.onClick.AddListener(OpenPilotSheet);
+
+        // Pause sits just below the top-right stage panel, aligned to its right edge.
+        var pause = Node(touchRoot.transform, "Pause button", AnchorTR, new Vector2(-22f, -128f), new Vector2(44f, 44f));
+        var pauseBody = Art(pause, "Fill", UiKit.Soft, new Color(.02f, .06f, .08f, .9f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        pauseBody.raycastTarget = true;
+        Fill(pause, "Edge", UiKit.SoftEdge, UiKit.Alpha(GameRules.Gold, .35f));
+        Art(pause, "Pause bar left", UiKit.Solid, UiKit.TextMain, AnchorCC, new Vector2(-5f, 0f), new Vector2(4f, 16f));
+        Art(pause, "Pause bar right", UiKit.Solid, UiKit.TextMain, AnchorCC, new Vector2(5f, 0f), new Vector2(4f, 16f));
+        pause.gameObject.AddComponent<MobileActionButton>().Init(this, true);
     }
 
     private void RefreshTouchHud()
@@ -234,13 +256,13 @@ public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragH
         if (game == null || game.State != RunState.Playing || hasPointer) return;
         activePointer = eventData.pointerId;
         hasPointer = true;
-        UpdateFromScreen(eventData);
+        UpdateFromScreen(eventData.position);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
         if (!hasPointer || eventData.pointerId != activePointer) return;
-        UpdateFromScreen(eventData);
+        UpdateFromScreen(eventData.position);
     }
 
     public void OnPointerUp(PointerEventData eventData)
@@ -250,18 +272,36 @@ public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragH
         activePointer = -1;
     }
 
-    private void UpdateFromScreen(PointerEventData eventData)
+    private void UpdateFromScreen(Vector2 screenPosition)
     {
         var rect = (RectTransform)transform;
         Camera camera = canvas != null ? canvas.worldCamera : null;
         Vector2 local;
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, eventData.position, camera, out local)) return;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPosition, camera, out local)) return;
         Vector2 next = Vector2.ClampMagnitude(local / radius, 1f);
         float magnitude = next.magnitude;
         next = magnitude <= .1f ? Vector2.zero : next.normalized * Mathf.InverseLerp(.1f, 1f, magnitude);
         value = next;
         if (knob != null) knob.anchoredPosition = next * radius;
         if (game != null) game.SetTouchMove(next);
+    }
+
+    private bool TryCurrentPointer(out Vector2 screenPosition)
+    {
+        for (int i = 0; i < Input.touchCount; i++)
+        {
+            Touch touch = Input.GetTouch(i);
+            if (touch.fingerId != activePointer) continue;
+            screenPosition = touch.position;
+            return true;
+        }
+        if (Input.GetMouseButton(0))
+        {
+            screenPosition = Input.mousePosition;
+            return true;
+        }
+        screenPosition = Vector2.zero;
+        return false;
     }
 
     public void ResetInput()
@@ -275,11 +315,17 @@ public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragH
 
     private void Update()
     {
-        if (game != null && game.State != RunState.Playing && (value.sqrMagnitude > .0001f || activePointer >= 0))
+        if (!hasPointer || game == null || !Application.isMobilePlatform) return;
+        if (game.State == RunState.Upgrade)
         {
-            ResetInput();
-            activePointer = -1;
+            // The upgrade overlay takes pointer events, but the physical touch may
+            // still be held. Keep it alive and re-read its position on resume.
+            if (!TryCurrentPointer(out _)) ResetInput();
+            return;
         }
+        if (game.State != RunState.Playing) return;
+        if (TryCurrentPointer(out Vector2 position)) UpdateFromScreen(position);
+        else ResetInput();
     }
 
     private void OnDisable() { ResetInput(); }

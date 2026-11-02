@@ -177,6 +177,10 @@ public sealed class RunSmokeCheck : MonoBehaviour
         var limitedWeaponStats = new RunStats(); for (int i = 0; i < 5; i++) limitedWeaponStats.Weapons[i] = 1; limitedWeaponStats.Weapons[4] = 0;
         bool remainingNewWeaponDrawn = Enumerable.Range(0, 40).Any(_ => GameRules.WeaponChoices(limitedWeaponStats).Any(option => option.Id == 4));
         Check(remainingNewWeaponDrawn && GameRules.WeaponChoices(limitedWeaponStats).Count == 3, "Weapon draft keeps the remaining new weapon alongside owned upgrades");
+        var threeLeftStats = new RunStats(); for (int i = 0; i < 5; i++) threeLeftStats.Weapons[i] = 1; threeLeftStats.EvolvedWeapons[0] = true; threeLeftStats.EvolvedWeapons[1] = true;
+        var threeBefore = GameRules.WeaponChoices(threeLeftStats);
+        var threeAfter = GameRules.WeaponChoices(threeLeftStats, threeBefore.Select(option => option.Id).ToList());
+        Check(threeAfter.Count == 3 && threeAfter.Select(option => option.Id).OrderBy(id => id).SequenceEqual(threeBefore.Select(option => option.Id).OrderBy(id => id)) && !threeAfter.Select(option => option.Id).SequenceEqual(threeBefore.Select(option => option.Id)), "Weapon reroll reshuffles the final three choices instead of freezing them");
         Check(GameRules.EnemySpawnInterval(230, 2) < GameRules.EnemySpawnInterval(0, 0) && GameRules.EnemyTimeMultiplier(230) < 1.4f && GameRules.BossEnemyMultiplier(2) < 1.3f, "Enemy density grows faster than the gradual stage stat curve");
         var normalRerollField = typeof(GameBootstrap).GetField("normalRerolls", BindingFlags.Instance | BindingFlags.NonPublic);
         var weaponRerollField = typeof(GameBootstrap).GetField("weaponRerolls", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -472,7 +476,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
             var bounds = Bounds(Node(name));
             Check(viewport.Contains(bounds.min) && viewport.Contains(bounds.max), "Mobile viewport contains " + name);
         }
-        var stick = Node("Movement joystick").GetComponent<VirtualJoystick>();
+        var stick = Node("Movement joystick hit").GetComponent<VirtualJoystick>();
         var stickRect = (RectTransform)stick.transform;
         Vector2 StickPoint(Vector2 local) => RectTransformUtility.WorldToScreenPoint(Camera.main, stickRect.TransformPoint(local));
         var pointer = new PointerEventData(EventSystem.current) { pointerId = 10, position = StickPoint(new Vector2(84, 0)) };

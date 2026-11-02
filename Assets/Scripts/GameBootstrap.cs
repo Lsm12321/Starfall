@@ -157,6 +157,7 @@ public partial class GameBootstrap : MonoBehaviour
     private void Update()
     {
         UpdateMusic();
+        UpdateGameplayUiScale();
         if (State == RunState.CharacterSheet)
         {
             if (Input.GetKeyDown(KeyCode.C) || Input.GetKeyDown(KeyCode.Escape)) ClosePilotSheet();
