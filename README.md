@@ -4,9 +4,9 @@ Unity 6 制作的二次元科幻风 2D 俯视角生存肉鸽。移动躲避逐�
 
 ## 下载游玩
 
-前往 [Releases](https://github.com/Lsm12321/Starfall/releases) 下载最新的 Windows 版压缩包，解压后双击 `Starfall.exe` 即可开始游戏。
+前往 [Releases](https://github.com/Lsm12321/Starfall/releases) 下载最新的版本。
+现版本支持Windows端和Android端。
 
-- 解压后必须保留整个文件夹，`Starfall_Data` 等文件要与 `Starfall.exe` 放在一起，不能只单独取出 exe。
 - 仓库只包含 Unity 工程源码，不含构建产物。需要从源码运行或自行打包，见下方「打开与构建工程」。
 
 ## 操作方式
