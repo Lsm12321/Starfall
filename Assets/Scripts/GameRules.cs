@@ -148,6 +148,20 @@ public static class GameRules
     public static readonly Color Gold = new Color(1f, .76f, .32f);
     public static readonly Color Pink = new Color(1f, .3f, .51f);
     public static readonly Color Violet = new Color(.69f, .5f, 1f);
+    public static readonly Color ArcColor = new Color(.38f, 1f, .45f);
+
+    public static Color WeaponColor(int id)
+    {
+        switch (id)
+        {
+            case 0: return Cyan;
+            case 1: return Gold;
+            case 2: return Violet;
+            case 3: return ArcColor;
+            case 4: return new Color(.47f, .82f, 1f);
+            default: return Color.white;
+        }
+    }
     public static int XpNeeded(int level) { return 36 + level * 14 + Mathf.Max(0, level - 10) * 5; }
     public static string BossName(int stage)
     {
@@ -268,7 +282,7 @@ public static class GameRules
     public static float CryoProjectileSpeed(int level) => 18f + Mathf.Clamp(level - 1, 0, MaxWeaponRank - 1) * 1.1f;
     public const int CryoPierce = 4;
     public static float CryoProjectileLength(int level) => 4.6f + Mathf.Clamp(level - 1, 0, MaxWeaponRank - 1) * .12f;
-    private static readonly int[] CryoDamageValues = { 35, 40, 52, 65, 80 };
+    private static readonly int[] CryoDamageValues = { 35, 45, 57, 65, 80 };
     public static int CryoDamage(int level) => ValueAt(CryoDamageValues, level - 1);
     public static int CryoEchoDamage(int level) => WeaponRankDamage(15, 4, level);
     public static float CryoSlowDuration(int level, float baseDuration) => baseDuration + Mathf.Clamp(level - 1, 0, MaxWeaponRank - 1) * .22f;
@@ -415,7 +429,7 @@ public static class GameRules
             "连锁目标 +2，单次总伤害 ×1.5\n电弧可继续跳跃 · 独立加成",
             "伤害 ×1.4，弹体加长 8%\n霜蚀：每 0.25 秒 3–5 点（随等级）· 独立加成"
         };
-        Color color = id == 0 ? Cyan : id == 1 ? Gold : id == 2 ? Violet : id == 3 ? new Color(.5f, .8f, 1f) : new Color(.47f, .82f, 1f);
+        Color color = WeaponColor(id);
         return new UpgradeOption(id, names[Mathf.Clamp(id, 0, names.Length - 1)], effects[Mathf.Clamp(id, 0, effects.Length - 1)], "✦", color, true, -1, UpgradeFlow.Weapon, true);
     }
 
@@ -495,8 +509,8 @@ public static class GameRules
             case 0: return new UpgradeOption(id, "星芒脉冲", next + "\n" + (stats.Weapons[0] == 0 ? WeaponIntro(0) : WeaponUpgradeText(0, stats)), "P", Cyan, true, -1, flow);
             case 1: return new UpgradeOption(id, "余烬散射", next + "\n" + (stats.Weapons[1] == 0 ? WeaponIntro(1) : WeaponUpgradeText(1, stats)), "S", Gold, true, -1, flow);
             case 2: return new UpgradeOption(id, "环轨光刃", next + "\n" + (stats.Weapons[2] == 0 ? WeaponIntro(2) : WeaponUpgradeText(2, stats)), "O", Violet, true, -1, flow);
-            case 3: return new UpgradeOption(id, "连锁电弧", next + "\n" + (stats.Weapons[3] == 0 ? WeaponIntro(3) : WeaponUpgradeText(3, stats)), "Z", new Color(.5f, .8f, 1f), true, -1, flow);
-            case 4: return new UpgradeOption(id, "冰晶长枪", next + "\n" + (stats.Weapons[4] == 0 ? WeaponIntro(4) : WeaponUpgradeText(4, stats)), "F", new Color(.47f, .82f, 1f), true, -1, flow);
+            case 3: return new UpgradeOption(id, "连锁电弧", next + "\n" + (stats.Weapons[3] == 0 ? WeaponIntro(3) : WeaponUpgradeText(3, stats)), "Z", ArcColor, true, -1, flow);
+            case 4: return new UpgradeOption(id, "冰晶长枪", next + "\n" + (stats.Weapons[4] == 0 ? WeaponIntro(4) : WeaponUpgradeText(4, stats)), "F", WeaponColor(4), true, -1, flow);
             case 5: return new UpgradeOption(id, "反应堆增幅", next + "\n全部武器伤害 +" + Mathf.RoundToInt(DamageUpgradeAtRank(stats.Ranks[id]) * 100) + "%。", ">", Gold);
             case 6: return new UpgradeOption(id, "超频回路", next + "\n全部武器攻击速度 +" + Mathf.RoundToInt(HasteUpgradeAtRank(stats.Ranks[id]) * 100) + "%。", ">>", Cyan);
             case 7: return new UpgradeOption(id, "轻量推进", next + "\n移动速度 +" + Mathf.RoundToInt(SpeedUpgradeAtRank(stats.Ranks[id]) * 100) + "%。", "~", new Color(.42f, .78f, 1f));

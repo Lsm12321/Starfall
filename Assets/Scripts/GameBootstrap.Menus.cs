@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -43,11 +43,11 @@ public partial class GameBootstrap
         if (touchControls)
         {
             panel = Node(panel, "Phone menu layout", AnchorCC, Vector2.zero, new Vector2(MobileMenuWidth, 810));
-            panel.localScale = Vector3.one * .90f;
+            panel.localScale = Vector3.one * .96f;
         }
 
         var left = Node(panel, "Menu left", AnchorTL, Vector2.zero, new Vector2(1440, 810));
-        left.localScale = Vector3.one * (touchControls ? 1.12f : 1.04f);
+        left.localScale = Vector3.one * (touchControls ? 1.11f : 1.04f);
 
         Art(left, "Title glow", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .13f), AnchorTL, new Vector2(56, -96), new Vector2(720, 320));
         Art(left, "Kicker mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .95f), AnchorTL, new Vector2(97, -106), new Vector2(8, 8));
@@ -106,7 +106,7 @@ public partial class GameBootstrap
         if (touchControls)
         {
             panel = Node(panel, "Phone result layout", AnchorCC, Vector2.zero, new Vector2(1440, 810));
-            panel.localScale = Vector3.one * (State == RunState.Paused ? .92f : .86f);
+            panel.localScale = Vector3.one * (State == RunState.Paused ? 1.06f : 1f);
         }
         Art(panel, "Modal backing", UiKit.Soft, new Color(.026f, .047f, .067f, 1f), AnchorCC, Vector2.zero, new Vector2(1098, 638));
         var modal = Frame(panel, "Modal", AnchorCC, Vector2.zero, new Vector2(1100, 640), accent, 1f);
@@ -178,10 +178,15 @@ public partial class GameBootstrap
             (victory ? "  ·  SECTOR CLEARED" : defeat ? "  ·  下次会走得更远" : string.Empty);
         Ct(modal, summary, 10, new Vector2(0, -476), new Vector2(900, 16), UiKit.TextMute, FontStyle.Bold);
 
-        if (State == RunState.Paused) Cta(modal, "Resume", "继续探索  /  RESUME", AnchorTC, new Vector2(0, -506), new Vector2(320, 48), accent, true, Resume, 14);
-        else Cta(modal, "Play again", "再次探索  /  PLAY AGAIN", AnchorTC, new Vector2(0, -506), new Vector2(320, 48), accent, true, PlayAgain, 14);
-        Cta(modal, "Back to title", "返回主菜单", AnchorTC, new Vector2(0, -566), new Vector2(320, 40), new Color(.45f, .57f, .64f), false, RestartRun, 12);
-        Ct(modal, "ESC  " + (State == RunState.Paused ? "继续" : "返回标题"), 9, new Vector2(0, -608), new Vector2(300, 14), UiKit.TextMute, FontStyle.Bold);
+        Button primaryAction = State == RunState.Paused
+            ? Cta(modal, "Resume", "继续探索", AnchorTC, new Vector2(0, -488), new Vector2(320, 48), accent, true, Resume, 14)
+            : Cta(modal, "Play again", "再次探索", AnchorTC, new Vector2(0, -488), new Vector2(320, 48), accent, true, PlayAgain, 14);
+        Button backAction = Cta(modal, "Back to title", "返回主菜单", AnchorTC, new Vector2(0, -566), new Vector2(320, 40), new Color(.45f, .57f, .64f), false, RestartRun, 12);
+        if (State == RunState.Paused && touchControls)
+        {
+            ((RectTransform)primaryAction.transform).sizeDelta = new Vector2(320, 60);
+            ((RectTransform)backAction.transform).sizeDelta = new Vector2(320, 58);
+        }
         if (State != RunState.Paused) AddUtilityButtons(panel);
     }
 
@@ -208,17 +213,27 @@ public partial class GameBootstrap
         var root = (RectTransform)sheetPanel.transform;
         Art(root, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .6f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
 
-        var sheetRoot = root;
-        if (touchControls)
-        {
-            sheetRoot = Node(root, "Phone sheet layout", AnchorCC, Vector2.zero, new Vector2(1440, 810));
-            sheetRoot.localScale = Vector3.one * 1.08f;
-        }
+        var sheetRoot = Node(root, touchControls ? "Phone sheet layout" : "Sheet layout", AnchorCC, Vector2.zero, new Vector2(1440, 810));
+        sheetRoot.localScale = Vector3.one * 1.10f;
 
         Color accent = CurrentCharacter.Accent;
-        var card = Frame(sheetRoot, "Pilot sheet frame", AnchorCC, Vector2.zero, new Vector2(touchControls ? 1120 : 1000, touchControls ? 680 : 620), accent, .97f);
+        var card = Frame(sheetRoot, "Pilot sheet frame", AnchorCC, Vector2.zero, new Vector2(1000, 620), accent, .97f);
         Lt(card, UiKit.Track("RUN STATUS  /  作战状态"), 10, new Vector2(30, -22), new Vector2(420, 16), UiKit.Alpha(accent, .95f), FontStyle.Bold);
-        Rt(card, "C / ESC  关闭", 9, new Vector2(-30, -24), new Vector2(200, 14), UiKit.TextMute, FontStyle.Bold);
+        if (touchControls)
+        {
+            var close = Node(card, "Close pilot sheet", AnchorTR, new Vector2(-22f, -18f), new Vector2(36f, 36f));
+            var closeBody = Art(close, "Fill", UiKit.SoftSmall, new Color(1f, 1f, 1f, .045f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+            closeBody.raycastTarget = true;
+            Fill(close, "Edge", UiKit.SoftSmallEdge, UiKit.Alpha(accent, .4f));
+            var closeButton = close.gameObject.AddComponent<Button>();
+            closeButton.targetGraphic = closeBody; closeButton.transition = Selectable.Transition.None;
+            closeButton.onClick.AddListener(ClosePilotSheet);
+            var x1 = Art(close, "X 1", UiKit.Solid, UiKit.TextMain, AnchorCC, Vector2.zero, new Vector2(2f, 16f));
+            var x2 = Art(close, "X 2", UiKit.Solid, UiKit.TextMain, AnchorCC, Vector2.zero, new Vector2(2f, 16f));
+            x1.rectTransform.localRotation = Quaternion.Euler(0, 0, 45f);
+            x2.rectTransform.localRotation = Quaternion.Euler(0, 0, -45f);
+        }
+        else Rt(card, "C / ESC  关闭", 9, new Vector2(-30, -24), new Vector2(200, 14), UiKit.TextMute, FontStyle.Bold);
 
         var portrait = Art(card, "Sheet portrait", SpriteResource(CurrentCharacter.Portrait), Color.white, AnchorTL, new Vector2(36, -64), new Vector2(280, 420));
         portrait.preserveAspect = true;
@@ -372,7 +387,7 @@ public partial class GameBootstrap
         Art(panel, "Scanlines", UiKit.Scanlines, new Color(0, 0, 0, .4f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
 
         var archive = Node(panel, "Phone archive layout", AnchorCC, new Vector2(0, 26f), new Vector2(1440, 810));
-        if (touchControls) archive.localScale = Vector3.one * .94f;
+        if (touchControls) archive.localScale = Vector3.one * 1f;
         panel = archive;
 
         Art(panel, "Header halo", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .10f), AnchorTL, new Vector2(240, -40), new Vector2(640, 240));
@@ -436,7 +451,7 @@ public partial class GameBootstrap
         for (int i = 0; i < CharacterRoster.All.Length; i++)
         {
             int index = i; CharacterProfile profile = CharacterRoster.All[i];
-            var card = Node(panel, "Character card", AnchorBL, AnchorBL, AnchorCC, new Vector2(630 + i * 162f, 238f), new Vector2(146, 250));
+            var card = Node(panel, "Character card", AnchorBL, AnchorBL, AnchorCC, new Vector2(596 + i * 179f, 196f), new Vector2(160, 266));
             var button = card.gameObject.AddComponent<Button>();
             var body = card.gameObject.AddComponent<Image>(); body.sprite = UiKit.Soft; body.type = Image.Type.Sliced;
             body.color = new Color(1, 1, 1, .03f); body.raycastTarget = true;
@@ -445,21 +460,21 @@ public partial class GameBootstrap
             var glow = Fill(card, "Glow", UiKit.Glow, UiKit.Alpha(profile.Accent, 0f), Vector2.zero, new Vector2(12, 12)); characterCardGlows[i] = glow;
             var edge = Fill(card, "Edge", UiKit.SoftEdge, new Color(1, 1, 1, .07f)); characterCardEdges[i] = edge;
             var bar = Art(card, "Accent bar", UiKit.Solid, new Color(1, 1, 1, .12f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, 0), new Vector2(-20, 2)); characterCardBars[i] = bar;
-            var portrait = Art(card, "Pilot portrait", SpriteResource(profile.Portrait), Color.white, new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -5), new Vector2(-14, 198));
+            var portrait = Art(card, "Pilot portrait", SpriteResource(profile.Portrait), Color.white, new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -5), new Vector2(-14, 214));
             portrait.preserveAspect = true;
-            Art(card, "Portrait scrim", UiKit.GradientDown, new Color(.012f, .02f, .032f, .8f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -165), new Vector2(-14, 38));
+            Art(card, "Portrait scrim", UiKit.GradientDown, new Color(.012f, .02f, .032f, .8f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -179), new Vector2(-14, 40));
             var chip = Node(card, "Index chip", AnchorTL, new Vector2(8, -8), new Vector2(26, 18));
             Art(chip, "Fill", UiKit.SoftSmall, new Color(.012f, .02f, .032f, .88f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
             Fill(chip, "Edge", UiKit.SoftSmallEdge, new Color(1, 1, 1, .1f));
             characterCardIndices[i] = Mc(chip, (i + 1).ToString("00"), 8, UiKit.TextDim, FontStyle.Bold);
-            Lt(card, profile.Name, 12, new Vector2(9, -207), new Vector2(130, 18), UiKit.TextMain, FontStyle.Bold);
-            Lt(card, profile.Weapon, 9, new Vector2(9, -228), new Vector2(130, 14), profile.Accent, FontStyle.Bold);
+            Lt(card, profile.Name, 14, new Vector2(9, -222), new Vector2(142, 20), UiKit.TextMain, FontStyle.Bold);
+            Lt(card, profile.Weapon, 10, new Vector2(9, -244), new Vector2(142, 16), profile.Accent, FontStyle.Bold);
             var hover = card.gameObject.AddComponent<UiHover>();
             hover.body = card; hover.edge = edge; hover.edgeIdle = edge.color; hover.edgeHot = profile.Accent; hover.hoverScale = 1.03f;
         }
 
-        Cta(panel, "Deploy pilot", "以当前角色出击", AnchorBR, new Vector2(-48, 34), new Vector2(300, 52), GameRules.Cyan, true, StartSelectedRun, 15);
-        Cta(panel, "Back to title", "返回标题  /  ESC", AnchorBR, new Vector2(-366, 34), new Vector2(190, 44), new Color(.45f, .62f, .69f), false, () => ShowStatePanel(RunState.Menu), 12);
+        Cta(panel, "Deploy pilot", "以当前角色出击", AnchorBR, new Vector2(-48, 16), new Vector2(300, 52), GameRules.Cyan, true, StartSelectedRun, 15);
+        Cta(panel, "Back to title", "返回标题", AnchorBR, new Vector2(-366, 16), new Vector2(190, 44), new Color(.45f, .62f, .69f), false, () => ShowStatePanel(RunState.Menu), 12);
 
         UpdateCharacterSelection();
     }

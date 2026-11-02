@@ -195,7 +195,7 @@ public partial class GameBootstrap
         int remainingRerolls = weaponFlow ? weaponRerolls : normalRerolls;
         rerollButton.interactable = flow != UpgradeFlow.Boss && remainingRerolls > 0;
         rerollButton.gameObject.SetActive(flow != UpgradeFlow.Boss);
-        rerollLabel.text = "R  /  刷新选项  ·  剩余 " + remainingRerolls;
+        rerollLabel.text = (touchControls ? "" : "R  /  ") + "刷新选项  ·  剩余 " + remainingRerolls;
         State = RunState.Upgrade; upgradePanel.SetActive(true); upgradePanel.transform.SetAsLastSibling(); Time.timeScale = 0;
     }
 }

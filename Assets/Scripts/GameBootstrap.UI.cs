@@ -85,15 +85,16 @@ public partial class GameBootstrap
     private void BuildTelemetry()
     {
         // Compact top-right readout: clock, level, stage name and wave progress only.
-        var panel = Frame(hudRoot.transform, "Top telemetry", AnchorTR, new Vector2(-22, -20), new Vector2(220, 100), GameRules.Gold, .9f);
+        float telemetryWidth = touchControls ? 252f : 220f;
+        var panel = Frame(hudRoot.transform, "Top telemetry", AnchorTR, new Vector2(-22, -20), new Vector2(telemetryWidth, 100), GameRules.Gold, .9f);
         stageEdge = panel.Find("Edge").GetComponent<Image>();
         Art(panel, "Accent", UiKit.Solid, UiKit.Alpha(GameRules.Gold, .9f), AnchorTL, new Vector2(12, -12), new Vector2(2, 20));
         clockText = Lt(panel, "00:00", 26, new Vector2(14, -8), new Vector2(120, 32), UiKit.TextMain, FontStyle.Bold, displayFont);
         DropShadow(clockText, -2f);
         Rt(panel, UiKit.Track("LEVEL"), 7, new Vector2(-12, -9), new Vector2(70, 10), UiKit.TextMute, FontStyle.Bold);
         levelText = Rt(panel, "01", 16, new Vector2(-12, -20), new Vector2(70, 20), GameRules.Gold, FontStyle.Bold, displayFont);
-        waveText = Lt(panel, GameRules.StageName(1), 12, new Vector2(14, -42), new Vector2(192, 28), UiKit.TextMain, FontStyle.Bold);
-        waveLabelText = Lt(panel, UiKit.Track("WAVE 01 / 18"), 8, new Vector2(14, -70), new Vector2(150, 12), UiKit.TextMute, FontStyle.Bold);
+        waveText = Lt(panel, GameRules.StageName(1), 12, new Vector2(14, -42), new Vector2(touchControls ? 224f : 192f, 28), UiKit.TextMain, FontStyle.Bold);
+        waveLabelText = Lt(panel, UiKit.Track("WAVE 01 / 18"), 8, new Vector2(14, -70), new Vector2(touchControls ? 170f : 150f, 12), UiKit.TextMute, FontStyle.Bold);
         Image waveGlow;
         waveFill = Bar(panel, "Wave progress", 14f, 14f, -82f, 4f, new Color(.09f, .15f, .18f, .85f), GameRules.Cyan, new Color(1, 1, 1, .1f), out waveGlow, out _, 18);
         waveGlow.color = UiKit.Alpha(GameRules.Cyan, .14f);

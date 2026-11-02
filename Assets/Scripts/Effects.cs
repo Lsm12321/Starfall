@@ -388,7 +388,7 @@ public sealed class FloatingLabel : MonoBehaviour
     }
     private void Update()
     {
-        if (GameBootstrap.Game == null) { Effects.ReleaseLabel(gameObject); return; }
+        if (GameBootstrap.Game == null || GameBootstrap.Game.State != RunState.Playing) { Effects.ReleaseLabel(gameObject); return; }
         if (cam == null) cam = Camera.main;
         if (cam == null) { Effects.ReleaseLabel(gameObject); return; }
         age += Time.unscaledDeltaTime; Vector3 point = cam.WorldToScreenPoint(source + Vector3.up * age * .48f);

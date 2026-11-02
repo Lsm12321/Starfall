@@ -152,5 +152,5 @@ public partial class GameBootstrap
 
     private string WeaponShort(int id) => new[] { "PULSE", "SCATTER", "ORBITAL", "ARC", "CRYO" }[id];
     private string WeaponGlyph(int id) => new[] { "P", "S", "O", "Z", "❄" }[id];
-    private Color WeaponTint(int id) => new[] { GameRules.Cyan, GameRules.Gold, GameRules.Violet, new Color(.5f, .8f, 1f), new Color(.47f, .82f, 1f) }[id];
+    private Color WeaponTint(int id) => GameRules.WeaponColor(id);
 }

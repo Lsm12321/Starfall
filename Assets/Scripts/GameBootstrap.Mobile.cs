@@ -154,12 +154,12 @@ public partial class GameBootstrap
         Stretch((RectTransform)touchRoot.transform);
 
         // Bottom-left virtual stick. The touch zone is larger than the drawn stick.
-        var hitZone = Node(touchRoot.transform, "Movement joystick hit", AnchorBL, AnchorBL, AnchorCC, new Vector2(178f, 158f), new Vector2(360f, 360f));
+        var hitZone = Node(touchRoot.transform, "Movement joystick hit", AnchorBL, AnchorBL, AnchorCC, new Vector2(202f, 180f), new Vector2(396f, 396f));
         var hitArea = Art(hitZone, "Hit area", UiKit.Solid, new Color(1f, 1f, 1f, .001f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         hitArea.raycastTarget = true;
 
         var pad = Node(hitZone, "Movement joystick", AnchorCC, Vector2.zero, new Vector2(236f, 236f));
-        pad.localScale = Vector3.one * 1.06f;
+        pad.localScale = Vector3.one * 1.12f;
         Art(pad, "Stick glow", UiKit.Glow, new Color(.12f, .92f, .86f, .12f), AnchorCC, Vector2.zero, new Vector2(250f, 250f));
         Art(pad, "Stick base", UiKit.Dot, new Color(.018f, .06f, .082f, .7f), AnchorCC, Vector2.zero, new Vector2(214f, 214f));
         Art(pad, "Stick edge", UiKit.Ring, UiKit.Alpha(GameRules.Cyan, .38f), AnchorCC, Vector2.zero, new Vector2(216f, 216f));
@@ -205,7 +205,7 @@ public partial class GameBootstrap
         sheetBody.raycastTarget = true;
         Fill(sheet, "Edge", UiKit.SoftEdge, UiKit.Alpha(GameRules.Cyan, .28f));
         Art(sheet, "Mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .85f), AnchorTL, new Vector2(10f, -17f), new Vector2(7f, 7f));
-        Mc(sheet, "角色  /  C", 12, UiKit.TextMain, FontStyle.Bold);
+        Mc(sheet, "角色", 12, UiKit.TextMain, FontStyle.Bold);
         var sheetButton = sheet.gameObject.AddComponent<Button>();
         sheetButton.targetGraphic = sheetBody; sheetButton.transition = Selectable.Transition.None;
         sheetButton.onClick.AddListener(OpenPilotSheet);
