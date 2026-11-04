@@ -85,7 +85,7 @@ public sealed class PlayerActor : MonoBehaviour
             timers[0] = GameRules.PulseInterval(pulse, stats.Haste);
             if (stats.EvolvedWeapons[0])
             {
-                float splitPower = GameRules.PulseDamage(pulse) * .75f;
+                float splitPower = GameRules.PulseDamage(pulse) * .65f;
                 Shoot(Rotate(targetDirection, -16), splitPower, 15f, 1.3f, 1 + GameRules.PulsePierce + stats.Pierce, new Color(.42f, 1f, 1f), .22f, false, 0, 0, 2.2f, 0, .25f, "pulse_nova", 0);
                 Shoot(targetDirection, splitPower, 15f, 1.3f, 1 + GameRules.PulsePierce + stats.Pierce, new Color(.42f, 1f, 1f), .22f, false, 0, 0, 2.2f, 0, .25f, "pulse_nova", 0);
                 Shoot(Rotate(targetDirection, 16), splitPower, 15f, 1.3f, 1 + GameRules.PulsePierce + stats.Pierce, new Color(.42f, 1f, 1f), .22f, false, 0, 0, 2.2f, 0, .25f, "pulse_nova", 0);
@@ -415,7 +415,7 @@ public sealed class EnemyActor : MonoBehaviour
         transform.position = GameRules.Clamp(position);
         visual.transform.localPosition = IsAnchored ? Vector3.zero : new Vector3(0, Mathf.Sin(Time.time * (Kind == EnemyKind.Runner || Kind == EnemyKind.NovaReaver ? 15 : 5) + GetInstanceID()) * .04f, 0);
         visual.flipX = toward.x < 0; flashTimer -= dt;
-        visual.color = flashTimer > 0 ? new Color(1, .65f, .65f) : chargeWarn > 0 || eliteWarn > 0 ? Color.Lerp(tint, GameRules.Pink, Mathf.PingPong(Time.time * 8, 1)) : IsChilled ? Color.Lerp(tint, new Color(.52f, .84f, 1f), .72f) : tint;
+        visual.color = flashTimer > 0 ? new Color(1f, .95f, .95f) : chargeWarn > 0 || eliteWarn > 0 ? Color.Lerp(tint, GameRules.Pink, Mathf.PingPong(Time.time * 8, 1)) : IsChilled ? Color.Lerp(tint, new Color(.52f, .84f, 1f), .72f) : tint;
         contactTimer -= dt;
         if (distance < Radius + .36f && contactTimer <= 0) { contactTimer = .7f; game.Player.TakeDamage(touchDamage); }
     }
@@ -630,6 +630,7 @@ public sealed class EnemyActor : MonoBehaviour
 public sealed class Projectile : MonoBehaviour
 {
     private static readonly HashSet<Projectile> active = new HashSet<Projectile>();
+    private static readonly Stack<Projectile> pool = new Stack<Projectile>();
     private static readonly Color HostileShotColor = new Color(1f, .18f, .2f, 1f);
     private Vector2 velocity;
     private int damage, remaining;
@@ -640,17 +641,83 @@ public sealed class Projectile : MonoBehaviour
     private float slowMultiplier, slowDuration, slowDamageInterval;
     private int slowDamage;
     private readonly HashSet<int> hit = new HashSet<int>();
+    private SpriteRenderer renderer;
+    private SpriteRenderer glow;
 
     public static void Create(Vector2 position, Vector2 direction, float speed, int damage, int pierce, float life, Color tint, bool critical, bool hostile, float size, float slowMultiplier = 0, float slowDuration = 0, float lengthScale = 2.2f, int slowDamage = 0, float slowDamageInterval = .25f, string projectileShape = null, int weaponId = -1)
     {
-        var obj = new GameObject(hostile ? "Hostile bolt" : "Energy bolt"); obj.transform.position = position;
-        obj.transform.localScale = new Vector3(size, hostile ? size : size * lengthScale, 1); obj.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90);
-        var renderer = obj.AddComponent<SpriteRenderer>(); renderer.sprite = GameBootstrap.Game.Shape(hostile ? "circle" : (projectileShape ?? "diamond")); renderer.color = hostile ? HostileShotColor : tint; renderer.sortingOrder = 20;
-        if (!hostile && (projectileShape == "cryo_lance" || projectileShape == "cryo_lance_evolved"))
+        Projectile bullet = TakeFromPool();
+        if (bullet == null)
         {
-            var glow = new GameObject(projectileShape == "cryo_lance_evolved" ? "Evolved glacial lance halo" : "Prismatic lance glow"); glow.transform.SetParent(obj.transform, false); glow.transform.localScale = projectileShape == "cryo_lance_evolved" ? new Vector3(2.25f, 1.22f, 1) : new Vector3(1.8f, 1.02f, 1); var glowRenderer = glow.AddComponent<SpriteRenderer>(); glowRenderer.sprite = renderer.sprite; glowRenderer.color = projectileShape == "cryo_lance_evolved" ? new Color(.64f, .98f, 1f, .3f) : new Color(.45f, .95f, 1f, .24f); glowRenderer.sortingOrder = 19;
+            var created = new GameObject(hostile ? "Hostile bolt" : "Energy bolt");
+            bullet = created.AddComponent<Projectile>();
+            bullet.renderer = created.AddComponent<SpriteRenderer>();
         }
-        var bullet = obj.AddComponent<Projectile>(); bullet.velocity = direction.normalized * speed; bullet.damage = damage; bullet.remaining = pierce; bullet.lifetime = life; bullet.hostile = hostile; bullet.critical = critical; bullet.radius = size * .55f; bullet.slowMultiplier = slowMultiplier; bullet.slowDuration = slowDuration; bullet.slowDamage = slowDamage; bullet.slowDamageInterval = Mathf.Max(.05f, slowDamageInterval); bullet.projectileShape = projectileShape; bullet.weaponId = weaponId; active.Add(bullet);
+        else bullet.gameObject.SetActive(true);
+
+        GameObject obj = bullet.gameObject;
+        obj.name = hostile ? "Hostile bolt" : "Energy bolt";
+        obj.transform.position = position;
+        obj.transform.localScale = new Vector3(size, hostile ? size : size * lengthScale, 1);
+        obj.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90);
+        bullet.renderer.sprite = GameBootstrap.Game.Shape(hostile ? "circle" : (projectileShape ?? "diamond"));
+        bullet.renderer.color = hostile ? HostileShotColor : tint;
+        bullet.renderer.sortingOrder = 20;
+        bullet.ConfigureGlow(hostile, projectileShape);
+        bullet.velocity = direction.normalized * speed;
+        bullet.damage = damage;
+        bullet.remaining = pierce;
+        bullet.lifetime = life;
+        bullet.hostile = hostile;
+        bullet.critical = critical;
+        bullet.radius = size * .55f;
+        bullet.slowMultiplier = slowMultiplier;
+        bullet.slowDuration = slowDuration;
+        bullet.slowDamage = slowDamage;
+        bullet.slowDamageInterval = Mathf.Max(.05f, slowDamageInterval);
+        bullet.projectileShape = projectileShape;
+        bullet.weaponId = weaponId;
+        bullet.hit.Clear();
+        active.Add(bullet);
+    }
+
+    private static Projectile TakeFromPool()
+    {
+        while (pool.Count > 0)
+        {
+            Projectile item = pool.Pop();
+            if (item != null) return item;
+        }
+        return null;
+    }
+
+    private void ConfigureGlow(bool isHostile, string shape)
+    {
+        bool show = !isHostile && (shape == "cryo_lance" || shape == "cryo_lance_evolved");
+        if (show && glow == null)
+        {
+            var glowObject = new GameObject(shape == "cryo_lance_evolved" ? "Evolved glacial lance halo" : "Prismatic lance glow");
+            glowObject.transform.SetParent(transform, false);
+            glow = glowObject.AddComponent<SpriteRenderer>();
+            glow.sortingOrder = 19;
+        }
+        if (glow == null) return;
+        glow.gameObject.SetActive(show);
+        if (!show) return;
+        glow.transform.localScale = shape == "cryo_lance_evolved" ? new Vector3(2.25f, 1.22f, 1) : new Vector3(1.8f, 1.02f, 1);
+        glow.sprite = renderer.sprite;
+        glow.color = shape == "cryo_lance_evolved" ? new Color(.64f, .98f, 1f, .3f) : new Color(.45f, .95f, 1f, .24f);
+    }
+
+    private void Release()
+    {
+        if (!active.Remove(this)) return;
+        if (pool.Count < 256)
+        {
+            gameObject.SetActive(false);
+            pool.Push(this);
+        }
+        else Destroy(gameObject);
     }
 
     public static int DispelHostileNear(Vector2 center, float bladeRadius)
@@ -665,8 +732,7 @@ public sealed class Projectile : MonoBehaviour
         if (dispelled == null) return 0;
         for (int i = 0; i < dispelled.Count; i++)
         {
-            active.Remove(dispelled[i]);
-            if (dispelled[i] != null) Destroy(dispelled[i].gameObject);
+            if (dispelled[i] != null) dispelled[i].Release();
         }
         return dispelled.Count;
     }
@@ -676,15 +742,15 @@ public sealed class Projectile : MonoBehaviour
         var game = GameBootstrap.Game; if (game.State != RunState.Playing) return;
         Vector2 previous = transform.position; Vector2 next = previous + velocity * Time.deltaTime;
         transform.position = next; lifetime -= Time.deltaTime;
-        if (lifetime <= 0 || Mathf.Abs(next.x) > GameRules.HalfWidth + 3 || Mathf.Abs(next.y) > GameRules.HalfHeight + 3) { Destroy(gameObject); return; }
+        if (lifetime <= 0 || Mathf.Abs(next.x) > GameRules.HalfWidth + 3 || Mathf.Abs(next.y) > GameRules.HalfHeight + 3) { Release(); return; }
         if (hostile)
         {
             if (game.Player != null && SegmentDistance(game.Player.transform.position, previous, next) < radius + .31f)
-            { game.Player.TakeDamage(damage); Destroy(gameObject); }
+            { game.Player.TakeDamage(damage); Release(); }
             return;
         }
         float swept = (next - previous).magnitude;
-        var nearby = game.Nearby((previous + next) * .5f, swept * .5f + 1.9f);
+        var nearby = game.Nearby((previous + next) * .5f, swept * .5f + 1.9f, sorted: false);
         foreach (var enemy in nearby)
         {
             if (enemy == null || hit.Contains(enemy.GetInstanceID()) || SegmentDistance(enemy.transform.position, previous, next) > enemy.Radius + radius) continue;
@@ -696,7 +762,7 @@ public sealed class Projectile : MonoBehaviour
             enemy.Hit(damage, critical, velocity.normalized * .2f, evolvedImpact);
             game.TrackWeaponDamage(weaponId, dealt);
             if (evolvedImpact) Effects.EvolvedProjectileImpact(transform.position, projectileShape);
-            if (--remaining <= 0) { Destroy(gameObject); break; }
+            if (--remaining <= 0) { Release(); break; }
         }
     }
     private static float SegmentDistance(Vector2 point, Vector2 a, Vector2 b)

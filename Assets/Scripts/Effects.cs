@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public static class Effects
 {
+    public static bool ShowDamageNumbers = true;
+    public static float ParticleDensity = 1f;
     private static Sprite white;
     private static Material lineMaterial;
 
@@ -18,6 +20,7 @@ public static class Effects
 
     public static void Burst(Vector3 position, Color color, int count, float scale)
     {
+        count = Mathf.Max(1, Mathf.RoundToInt(count * ParticleDensity));
         for (int i = 0; i < count; i++)
         {
             float angle = Random.value * Mathf.PI * 2, speed = Random.Range(1.2f, 4.5f);
@@ -78,6 +81,7 @@ public static class Effects
 
     public static void FloatingNumber(Vector3 position, string text, Color tint, bool heavy)
     {
+        if (!ShowDamageNumbers) return;
         var canvas = UiCanvas(); if (canvas == null) return;
         var obj = TakeFromPool(LabelPool);
         if (obj == null)
@@ -409,7 +413,16 @@ public static class SoundBank
     private static AudioSource source;
     private static AudioSource musicSource;
     private static string currentMusic;
+    private static float musicVolume = .8f;
+    private static float sfxVolume = .8f;
     private static readonly Dictionary<SoundCue, AudioClip> clips = new Dictionary<SoundCue, AudioClip>();
+
+    public static void SetMix(float music, float sfx)
+    {
+        musicVolume = Mathf.Clamp01(music);
+        sfxVolume = Mathf.Clamp01(sfx);
+        if (musicSource != null) musicSource.volume = .18f * musicVolume;
+    }
 
     public static void SetMusic(string key)
     {
@@ -419,7 +432,7 @@ public static class SoundBank
         {
             var obj = new GameObject("Background music"); Object.DontDestroyOnLoad(obj);
             musicSource = obj.AddComponent<AudioSource>(); musicSource.playOnAwake = false;
-            musicSource.spatialBlend = 0; musicSource.loop = true; musicSource.volume = .18f;
+            musicSource.spatialBlend = 0; musicSource.loop = true; musicSource.volume = .18f * musicVolume;
         }
         musicSource.Stop();
         musicSource.clip = string.IsNullOrEmpty(key) ? null : Resources.Load<AudioClip>("Audio/" + key);
@@ -432,7 +445,7 @@ public static class SoundBank
         {
             var obj = new GameObject("Procedural sound"); Object.DontDestroyOnLoad(obj); source = obj.AddComponent<AudioSource>(); source.playOnAwake = false; source.spatialBlend = 0;
         }
-        volume = Mathf.Clamp01(volume * SfxGain);
+        volume = Mathf.Clamp01(volume * SfxGain * sfxVolume);
         if (clips.TryGetValue(cue, out AudioClip cached)) { source.PlayOneShot(cached, volume); return; }
         int count = cue == SoundCue.BossDefeat ? 5 : cue == SoundCue.Scatter ? 2 : cue == SoundCue.Arc ? 3 : 1;
         float root = cue == SoundCue.BossDefeat ? 190 : cue == SoundCue.Dash ? 100 : cue == SoundCue.Hurt ? 140 : cue == SoundCue.Pickup ? 740 : cue == SoundCue.Upgrade ? 510 : cue == SoundCue.Arc ? 400 : cue == SoundCue.Scatter ? 250 : 600;

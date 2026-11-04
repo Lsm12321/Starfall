@@ -1,10 +1,11 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// Mobile presentation: 20:9 viewport lock, virtual stick, dash trigger and
+// Mobile presentation: 20:9 viewport lock fitted inside Screen.safeArea, virtual stick, dash trigger and
 // touch-friendly HUD refresh hooks. Desktop keeps the original 16:9 layout.
 public partial class GameBootstrap
 {
@@ -15,6 +16,12 @@ public partial class GameBootstrap
     private Vector2 touchMove;
     private Camera letterboxCamera;
     private int viewportWidth, viewportHeight;
+    private Rect viewportRawSafeArea;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+    // Development-only notch/gesture simulation: --safe-area-insets=left,bottom,right,top (pixels).
+    private bool debugSafeInsetsActive;
+    private Vector4 debugSafeInsets;
+#endif
     private VirtualJoystick virtualJoystick;
     private MobileActionButton dashTouchButton;
     private Image dashButtonRing;
@@ -25,6 +32,15 @@ public partial class GameBootstrap
 
     public bool TouchControls => touchControls;
     public Vector2 TouchMove => touchMove;
+    // Aspect of the locked (and, on touch, safe-area fitted) gameplay/UI viewport.
+    private float ViewportAspect
+    {
+        get
+        {
+            Rect view = worldCamera != null ? worldCamera.pixelRect : new Rect(0f, 0f, Screen.width, Screen.height);
+            return view.width / Mathf.Max(1f, view.height);
+        }
+    }
 
     private static bool HasCommandLineFlag(string flag)
     {
@@ -35,6 +51,9 @@ public partial class GameBootstrap
     {
         touchControls = Application.isMobilePlatform || HasCommandLineFlag("--mobile-ui");
         Input.multiTouchEnabled = true;
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        ParseDebugSafeInsets();
+#endif
         if (!Application.isMobilePlatform) return;
         Screen.orientation = ScreenOrientation.LandscapeLeft;
         Screen.autorotateToPortrait = false;
@@ -104,24 +123,74 @@ public partial class GameBootstrap
     {
         if (worldCamera == null) return;
         int width = Mathf.Max(1, Screen.width), height = Mathf.Max(1, Screen.height);
-        if (!force && width == viewportWidth && height == viewportHeight) return;
-        viewportWidth = width; viewportHeight = height;
-        float aspect = width / (float)height;
-        Rect rect;
-        if (aspect > LockedAspect)
-        {
-            float viewWidth = LockedAspect / aspect;
-            rect = new Rect((1f - viewWidth) * .5f, 0f, viewWidth, 1f);
-        }
-        else
-        {
-            float viewHeight = aspect / LockedAspect;
-            rect = new Rect(0f, (1f - viewHeight) * .5f, 1f, viewHeight);
-        }
-        worldCamera.rect = rect;
+        // Touch layouts also follow notch / gesture insets, which can change without a resolution change.
+        Rect rawSafe = touchControls ? Screen.safeArea : new Rect(0f, 0f, width, height);
+        if (!force && width == viewportWidth && height == viewportHeight && rawSafe.Equals(viewportRawSafeArea)) return;
+        viewportWidth = width; viewportHeight = height; viewportRawSafeArea = rawSafe;
+        worldCamera.rect = touchControls ? SafeAspectRect(width, height, ResolveSafeArea(width, height, rawSafe)) : CenteredAspectRect(width, height);
         if (letterboxCamera != null) letterboxCamera.rect = new Rect(0f, 0f, 1f, 1f);
         if (canvas != null) Canvas.ForceUpdateCanvases();
     }
+
+    // Desktop: the original centred 16:9 lock over the whole window.
+    private Rect CenteredAspectRect(int width, int height)
+    {
+        float aspect = width / (float)height;
+        if (aspect > LockedAspect)
+        {
+            float viewWidth = LockedAspect / aspect;
+            return new Rect((1f - viewWidth) * .5f, 0f, viewWidth, 1f);
+        }
+        float viewHeight = aspect / LockedAspect;
+        return new Rect(0f, (1f - viewHeight) * .5f, 1f, viewHeight);
+    }
+
+    // Clamp the reported safe area to the screen; reject NaN, collapsed or implausibly small areas.
+    private Rect ResolveSafeArea(int width, int height, Rect raw)
+    {
+        var full = new Rect(0f, 0f, width, height);
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        if (debugSafeInsetsActive)
+            raw = Rect.MinMaxRect(debugSafeInsets.x, debugSafeInsets.y, width - debugSafeInsets.z, height - debugSafeInsets.w);
+#endif
+        if (!IsFinite(raw.x) || !IsFinite(raw.y) || !IsFinite(raw.width) || !IsFinite(raw.height) || raw.width <= 0f || raw.height <= 0f) return full;
+        float xMin = Mathf.Clamp(Mathf.Min(raw.xMin, raw.xMax), 0f, width), xMax = Mathf.Clamp(Mathf.Max(raw.xMin, raw.xMax), 0f, width);
+        float yMin = Mathf.Clamp(Mathf.Min(raw.yMin, raw.yMax), 0f, height), yMax = Mathf.Clamp(Mathf.Max(raw.yMin, raw.yMax), 0f, height);
+        if (xMax - xMin < width * .5f || yMax - yMin < height * .5f) return full;
+        return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+    }
+
+    private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+    // Largest locked-aspect rect centred inside the safe area, snapped inward to whole pixels so
+    // camera.pixelRect never rounds past a safe edge.
+    private Rect SafeAspectRect(int width, int height, Rect safe)
+    {
+        float w = safe.width, h = safe.height;
+        if (w / h > LockedAspect) w = h * LockedAspect; else h = w / LockedAspect;
+        float xMin = Mathf.Ceil(safe.x + (safe.width - w) * .5f);
+        float yMin = Mathf.Ceil(safe.y + (safe.height - h) * .5f);
+        float xMax = Mathf.Max(xMin + 1f, Mathf.Min(Mathf.Floor(safe.x + (safe.width + w) * .5f), Mathf.Floor(safe.xMax)));
+        float yMax = Mathf.Max(yMin + 1f, Mathf.Min(Mathf.Floor(safe.y + (safe.height + h) * .5f), Mathf.Floor(safe.yMax)));
+        return new Rect(xMin / width, yMin / height, (xMax - xMin) / width, (yMax - yMin) / height);
+    }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+    private void ParseDebugSafeInsets()
+    {
+        const string prefix = "--safe-area-insets=";
+        string arg = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+        if (arg == null) return;
+        string[] parts = arg.Substring(prefix.Length).Split(',');
+        var values = new float[4];
+        bool valid = parts.Length == 4;
+        for (int i = 0; valid && i < 4; i++)
+            valid = float.TryParse(parts[i].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out values[i]) && IsFinite(values[i]) && values[i] >= 0f;
+        if (!valid) { Debug.LogWarning("Ignoring malformed " + arg + " (expected left,bottom,right,top pixels)."); return; }
+        debugSafeInsetsActive = true;
+        debugSafeInsets = new Vector4(values[0], values[1], values[2], values[3]);
+    }
+#endif
 
     private void UpdateMobileViewport()
     {
@@ -153,13 +222,16 @@ public partial class GameBootstrap
         touchRoot.transform.SetParent(hudRoot.transform, false);
         Stretch((RectTransform)touchRoot.transform);
 
-        // Bottom-left virtual stick. The touch zone is larger than the drawn stick.
-        var hitZone = Node(touchRoot.transform, "Movement joystick hit", AnchorBL, AnchorBL, AnchorCC, new Vector2(202f, 180f), new Vector2(396f, 396f));
-        var hitArea = Art(hitZone, "Hit area", UiKit.Solid, new Color(1f, 1f, 1f, .001f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        hitArea.raycastTarget = true;
+        // Floating virtual stick: touch anywhere on the left side to spawn it.
+        var stickTouch = Node(touchRoot.transform, "Movement joystick touch", AnchorCC, Vector2.zero, Vector2.zero);
+        Stretch((RectTransform)stickTouch);
+        var stickHit = Art(stickTouch, "Hit area", UiKit.Solid, new Color(1f, 1f, 1f, .001f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        stickHit.raycastTarget = true;
 
-        var pad = Node(hitZone, "Movement joystick", AnchorCC, Vector2.zero, new Vector2(236f, 236f));
+        var pad = Node(stickTouch, "Movement joystick", AnchorCC, Vector2.zero, new Vector2(236f, 236f));
         pad.localScale = Vector3.one * 1.12f;
+        var stickGroup = pad.gameObject.AddComponent<CanvasGroup>();
+        stickGroup.alpha = 0f; stickGroup.blocksRaycasts = false; stickGroup.interactable = false;
         Art(pad, "Stick glow", UiKit.Glow, new Color(.12f, .92f, .86f, .12f), AnchorCC, Vector2.zero, new Vector2(250f, 250f));
         Art(pad, "Stick base", UiKit.Dot, new Color(.018f, .06f, .082f, .7f), AnchorCC, Vector2.zero, new Vector2(214f, 214f));
         Art(pad, "Stick edge", UiKit.Ring, UiKit.Alpha(GameRules.Cyan, .38f), AnchorCC, Vector2.zero, new Vector2(216f, 216f));
@@ -173,14 +245,15 @@ public partial class GameBootstrap
         Art(knob, "Knob edge", UiKit.Ring, UiKit.Alpha(GameRules.Cyan, .92f), AnchorCC, Vector2.zero, new Vector2(92f, 92f));
         Art(knob, "Knob core", UiKit.Dot, new Color(1f, 1f, 1f, .6f), AnchorCC, Vector2.zero, new Vector2(10f, 10f));
 
-        virtualJoystick = hitZone.gameObject.AddComponent<VirtualJoystick>();
-        virtualJoystick.Init(this, knob, 84f, canvas);
+        virtualJoystick = stickTouch.gameObject.AddComponent<VirtualJoystick>();
+        virtualJoystick.Init(this, pad, knob, 84f, canvas, stickGroup);
 
-        // Bottom-right dash action.
-        var dash = Node(touchRoot.transform, "Dash touch button", AnchorBR, AnchorBR, AnchorCC, new Vector2(-158f, 156f), new Vector2(178f, 178f));
-        dash.localScale = Vector3.one * 1.08f;
-        var dashHit = Art(dash, "Touch area", UiKit.Ring, new Color(1f, 1f, 1f, .002f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        // Bottom-right dash action. The hit zone is 150% of the drawn button.
+        var dashHitZone = Node(touchRoot.transform, "Dash touch button hit", AnchorBR, AnchorBR, AnchorCC, new Vector2(-158f, 156f), new Vector2(288.36f, 288.36f));
+        var dashHit = Art(dashHitZone, "Hit area", UiKit.Solid, new Color(1f, 1f, 1f, .001f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         dashHit.raycastTarget = true;
+        var dash = Node(dashHitZone, "Dash touch button", AnchorCC, Vector2.zero, new Vector2(178f, 178f));
+        dash.localScale = Vector3.one * 1.08f;
         Art(dash, "Dash glow", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .2f), AnchorCC, Vector2.zero, new Vector2(220f, 220f));
         Art(dash, "Dash body", UiKit.Dot, new Color(.02f, .075f, .095f, .86f), AnchorCC, Vector2.zero, new Vector2(168f, 168f));
         Art(dash, "Dash edge", UiKit.Ring, UiKit.Alpha(GameRules.Cyan, .45f), AnchorCC, Vector2.zero, new Vector2(172f, 172f));
@@ -194,29 +267,29 @@ public partial class GameBootstrap
         MakeText(dash, "Dash label", "冲刺", 23, TextAnchor.MiddleCenter, AnchorCC, AnchorCC, AnchorCC,
             new Vector2(0f, 8f), new Vector2(150f, 26f), UiKit.TextMain, FontStyle.Bold, displayFont);
         Art(dash, "Dash rule", UiKit.Solid, UiKit.Alpha(GameRules.Cyan, .3f), AnchorCC, new Vector2(0f, -9f), new Vector2(58f, 1f));
-        dashButtonState = MakeText(dash, "Dash state", "就绪", 14, TextAnchor.MiddleCenter, AnchorCC, AnchorCC, AnchorCC,
+        dashButtonState = MakeText(dash, "Dash state", "Ready", 14, TextAnchor.MiddleCenter, AnchorCC, AnchorCC, AnchorCC,
             new Vector2(0f, -24f), new Vector2(132f, 22f), GameRules.Cyan, FontStyle.Bold, uiFont);
-        dashTouchButton = dash.gameObject.AddComponent<MobileActionButton>();
+        dashTouchButton = dashHitZone.gameObject.AddComponent<MobileActionButton>();
         dashTouchButton.Init(this, false);
 
-        // Character sheet shortcut, directly under the top-left vitals.
-        var sheet = Node(touchRoot.transform, "Open pilot sheet", AnchorTL, new Vector2(22f, -112f), new Vector2(96f, 44f));
+        // Character sheet shortcut, directly under the top-left vitals; sized as a comfortable thumb target.
+        var sheet = Node(touchRoot.transform, "Open pilot sheet", AnchorTL, new Vector2(22f, -114f), new Vector2(116f, 58f));
         var sheetBody = Art(sheet, "Fill", UiKit.Soft, new Color(.02f, .06f, .08f, .9f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         sheetBody.raycastTarget = true;
         Fill(sheet, "Edge", UiKit.SoftEdge, UiKit.Alpha(GameRules.Cyan, .28f));
-        Art(sheet, "Mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .85f), AnchorTL, new Vector2(10f, -17f), new Vector2(7f, 7f));
-        Mc(sheet, "角色", 12, UiKit.TextMain, FontStyle.Bold);
+        Art(sheet, "Mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .85f), AnchorCL, new Vector2(14f, 0f), new Vector2(7f, 7f));
+        Mc(sheet, "角色", 15, UiKit.TextMain, FontStyle.Bold);
         var sheetButton = sheet.gameObject.AddComponent<Button>();
         sheetButton.targetGraphic = sheetBody; sheetButton.transition = Selectable.Transition.None;
         sheetButton.onClick.AddListener(OpenPilotSheet);
 
         // Pause sits just below the top-right stage panel, aligned to its right edge.
-        var pause = Node(touchRoot.transform, "Pause button", AnchorTR, new Vector2(-22f, -128f), new Vector2(44f, 44f));
+        var pause = Node(touchRoot.transform, "Pause button", AnchorTR, new Vector2(-22f, -130f), new Vector2(60f, 58f));
         var pauseBody = Art(pause, "Fill", UiKit.Soft, new Color(.02f, .06f, .08f, .9f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         pauseBody.raycastTarget = true;
         Fill(pause, "Edge", UiKit.SoftEdge, UiKit.Alpha(GameRules.Gold, .35f));
-        Art(pause, "Pause bar left", UiKit.Solid, UiKit.TextMain, AnchorCC, new Vector2(-5f, 0f), new Vector2(4f, 16f));
-        Art(pause, "Pause bar right", UiKit.Solid, UiKit.TextMain, AnchorCC, new Vector2(5f, 0f), new Vector2(4f, 16f));
+        Art(pause, "Pause bar left", UiKit.Solid, UiKit.TextMain, AnchorCC, new Vector2(-6f, 0f), new Vector2(5f, 20f));
+        Art(pause, "Pause bar right", UiKit.Solid, UiKit.TextMain, AnchorCC, new Vector2(6f, 0f), new Vector2(5f, 20f));
         pause.gameObject.AddComponent<MobileActionButton>().Init(this, true);
     }
 
@@ -230,7 +303,7 @@ public partial class GameBootstrap
         }
         if (dashButtonState != null)
         {
-            SetText(dashButtonState, Player.DashReady ? "就绪" : Player.DashCooldown.ToString("0.0") + "s");
+            SetText(dashButtonState, Player.DashReady ? "Ready" : Player.DashCooldown.ToString("0.0") + "s");
             dashButtonState.color = Player.DashReady ? GameRules.Cyan : UiKit.TextDim;
         }
     }
@@ -239,24 +312,54 @@ public partial class GameBootstrap
 public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
     private GameBootstrap game;
+    private RectTransform visual;
     private RectTransform knob;
+    private CanvasGroup visualGroup;
     private Canvas canvas;
     private float radius = 84f;
     private int activePointer = -1;
     private bool hasPointer;
+    private Vector2 originLocal;
     private Vector2 value;
 
-    public void Init(GameBootstrap owner, RectTransform stick, float stickRadius, Canvas parentCanvas)
+    public void Init(GameBootstrap owner, RectTransform visualRoot, RectTransform stick, float stickRadius, Canvas parentCanvas, CanvasGroup group)
     {
-        game = owner; knob = stick; radius = Mathf.Max(1f, stickRadius); canvas = parentCanvas;
+        game = owner;
+        visual = visualRoot;
+        knob = stick;
+        radius = Mathf.Max(1f, stickRadius);
+        canvas = parentCanvas;
+        visualGroup = group;
+        if (visualGroup != null)
+        {
+            visualGroup.alpha = 0f;
+            visualGroup.blocksRaycasts = false;
+            visualGroup.interactable = false;
+        }
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
         if (game == null || game.State != RunState.Playing || hasPointer) return;
+        // Only touches inside the locked/safe viewport count, and the right side of that
+        // viewport stays free for dash, pause and sheet controls.
+        Rect view = ViewportRect();
+        if (!view.Contains(eventData.position) || eventData.position.x > view.xMin + view.width * .5f) return;
         activePointer = eventData.pointerId;
         hasPointer = true;
-        UpdateFromScreen(eventData.position);
+        originLocal = ClampToCanvas(ScreenToCanvas(eventData.position));
+        if (visual != null)
+        {
+            visual.gameObject.SetActive(true);
+            visual.anchoredPosition = originLocal;
+        }
+        if (knob != null) knob.anchoredPosition = Vector2.zero;
+        if (visualGroup != null)
+        {
+            visualGroup.alpha = 1f;
+            visualGroup.blocksRaycasts = false;
+        }
+        if (game != null) game.SetTouchMove(Vector2.zero);
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -269,16 +372,37 @@ public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragH
     {
         if (!hasPointer || eventData.pointerId != activePointer) return;
         ResetInput();
-        activePointer = -1;
     }
 
-    private void UpdateFromScreen(Vector2 screenPosition)
+    private Rect ViewportRect()
+    {
+        Camera camera = canvas != null ? canvas.worldCamera : null;
+        return camera != null ? camera.pixelRect : new Rect(0f, 0f, Screen.width, Screen.height);
+    }
+
+    private Vector2 ScreenToCanvas(Vector2 screenPosition)
     {
         var rect = (RectTransform)transform;
         Camera camera = canvas != null ? canvas.worldCamera : null;
         Vector2 local;
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPosition, camera, out local)) return;
-        Vector2 next = Vector2.ClampMagnitude(local / radius, 1f);
+        return RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPosition, camera, out local) ? local : Vector2.zero;
+    }
+
+    private Vector2 ClampToCanvas(Vector2 local)
+    {
+        var rect = (RectTransform)transform;
+        float margin = visual != null ? Mathf.Max(visual.rect.width, visual.rect.height) * .55f : 140f;
+        float halfWidth = rect.rect.width * .5f;
+        float halfHeight = rect.rect.height * .5f;
+        return new Vector2(
+            Mathf.Clamp(local.x, -halfWidth + margin, halfWidth - margin),
+            Mathf.Clamp(local.y, -halfHeight + margin, halfHeight - margin));
+    }
+
+    private void UpdateFromScreen(Vector2 screenPosition)
+    {
+        Vector2 local = ScreenToCanvas(screenPosition);
+        Vector2 next = Vector2.ClampMagnitude((local - originLocal) / radius, 1f);
         float magnitude = next.magnitude;
         next = magnitude <= .1f ? Vector2.zero : next.normalized * Mathf.InverseLerp(.1f, 1f, magnitude);
         value = next;
@@ -315,20 +439,34 @@ public sealed class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragH
 
     private void Update()
     {
-        if (!hasPointer || game == null || !Application.isMobilePlatform) return;
-        if (game.State == RunState.Upgrade)
+        if (hasPointer && game != null && Application.isMobilePlatform)
         {
-            // The upgrade overlay takes pointer events, but the physical touch may
-            // still be held. Keep it alive and re-read its position on resume.
-            if (!TryCurrentPointer(out _)) ResetInput();
-            return;
+            if (game.State == RunState.Upgrade)
+            {
+                // The upgrade overlay takes pointer events, but the physical touch may
+                // still be held. Keep it alive and re-read its position on resume.
+                if (!TryCurrentPointer(out _)) ResetInput();
+            }
+            else if (game.State == RunState.Playing)
+            {
+                if (TryCurrentPointer(out Vector2 position)) UpdateFromScreen(position);
+                else ResetInput();
+            }
         }
-        if (game.State != RunState.Playing) return;
-        if (TryCurrentPointer(out Vector2 position)) UpdateFromScreen(position);
-        else ResetInput();
+        if (visualGroup != null)
+        {
+            float target = hasPointer ? 1f : 0f;
+            float speed = target > visualGroup.alpha ? 10f : 4f;
+            visualGroup.alpha = Mathf.MoveTowards(visualGroup.alpha, target, Time.unscaledDeltaTime * speed);
+        }
     }
 
-    private void OnDisable() { ResetInput(); }
+    private void OnDisable()
+    {
+        ResetInput();
+        if (visualGroup != null) visualGroup.alpha = 0f;
+    }
+
     private void OnApplicationFocus(bool focused) { if (!focused) ResetInput(); }
 }
 

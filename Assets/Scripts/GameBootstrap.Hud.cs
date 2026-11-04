@@ -35,6 +35,18 @@ public partial class GameBootstrap
                 stagePips[i].color = i < BossesDefeated ? stageColor : i == BossesDefeated ? UiKit.Alpha(stageColor, .9f) : new Color(1, 1, 1, .12f);
             }
             if (stageEdge != null) stageEdge.color = UiKit.Alpha(GameRules.BossColor(Mathf.Clamp(BossesDefeated + 1, 1, GameRules.BossCount)), .4f);
+            if (hintText != null)
+            {
+                // Control hints are an onboarding aid: full strength for the opening seconds, then they step back.
+                // Touch controls are self-labelled, so the phone hint leaves the battlefield entirely.
+                float settle = Mathf.Clamp01((Elapsed - 12f) / 2.5f);
+                Color hint = touchControls ? UiKit.TextDim : UiKit.TextMute;
+                hint.a *= Mathf.Lerp(1f, touchControls ? 0f : .45f, settle);
+                hintText.color = hint;
+                // Only while actually playing: overlays (upgrades, cores, sheet) must not show HUD text bleeding through.
+                bool showHint = hint.a > .01f && State == RunState.Playing;
+                if (hintText.enabled != showHint) hintText.enabled = showHint;
+            }
         }
 
         float hpTarget = Mathf.Clamp01(Player.Health / (float)Player.MaxHealth);
@@ -61,7 +73,7 @@ public partial class GameBootstrap
         dashFill.fillAmount = dashDisplay;
         if (labels)
         {
-            SetText(dashText, Player.DashReady ? "READY" : Player.DashCooldown.ToString("0.0") + "s");
+            SetText(dashText, Player.DashReady ? "Ready" : Player.DashCooldown.ToString("0.0") + "s");
             dashText.color = Player.DashReady ? GameRules.Cyan : UiKit.TextDim;
         }
 
@@ -121,7 +133,7 @@ public partial class GameBootstrap
         }
 
         float remaining = bannerUntil - Time.unscaledTime;
-        bool showBanner = !string.IsNullOrEmpty(bannerMessage) && remaining > -.2f;
+        bool showBanner = !string.IsNullOrEmpty(bannerMessage) && remaining > -.2f && State == RunState.Playing;
         if (bannerRoot.gameObject.activeSelf != showBanner) bannerRoot.gameObject.SetActive(showBanner);
         if (showBanner)
         {
@@ -151,6 +163,8 @@ public partial class GameBootstrap
     }
 
     private string WeaponShort(int id) => new[] { "PULSE", "SCATTER", "ORBITAL", "ARC", "CRYO" }[id];
+    // Chinese-first names for result and status tables; English stays only as small kicker labels elsewhere.
+    private string WeaponName(int id) => new[] { "星芒脉冲", "余烬散射", "环轨光刃", "连锁电弧", "冰晶长枪" }[id];
     private string WeaponGlyph(int id) => new[] { "P", "S", "O", "Z", "❄" }[id];
     private Color WeaponTint(int id) => GameRules.WeaponColor(id);
 }

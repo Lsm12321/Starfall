@@ -1,11 +1,17 @@
 /Library/
 /Temp/
 /Obj/
+/obj/
 /Logs/
 /UserSettings/
 /Build/
 /work/
+/docs/
+/out/
 /outputs/
+/node_modules/
+/Starfall Studio/
+/.dsh-office-*/
 *.csproj
 *.sln
 *.slnx

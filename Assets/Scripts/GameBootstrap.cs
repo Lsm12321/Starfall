@@ -27,6 +27,7 @@ public partial class GameBootstrap : MonoBehaviour
     public float WaveProgress => Mathf.Repeat(Elapsed, 36f) / 36f;
 
     private readonly List<EnemyActor> enemies = new List<EnemyActor>();
+    private readonly List<EnemyActor> nearbyBuffer = new List<EnemyActor>(64);
     private readonly List<UpgradeOption> choices = new List<UpgradeOption>();
     private readonly bool[] bossRewardsClaimed = new bool[3];
     private readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
@@ -97,7 +98,13 @@ public partial class GameBootstrap : MonoBehaviour
     private float bossTransitionTimer;
     private bool victoryPending;
     private float victoryTimer;
+    private const float CameraOverscan = 2f;
+    internal static float ScreenShakeScale = .4f;
     private float cameraShakeTimer, cameraShakeStrength;
+    private Vector3 cameraBasePosition;
+    private Vector3 lastCameraPlayerPosition;
+    private Vector2 cameraPlayerVelocity;
+    private bool cameraReady;
     private float bossHitStopTimer;
     private float bossRewardTimer;
     private int pendingBossRewardStage, rewardBossStage;
@@ -124,9 +131,18 @@ public partial class GameBootstrap : MonoBehaviour
     {
         string buildId = Application.version + "|" + (string.IsNullOrEmpty(Application.buildGUID) ? "no-guid" : Application.buildGUID);
         if (PlayerPrefs.GetString("Starfall.SaveBuild", "") == buildId) return;
-        int muted = PlayerPrefs.GetInt("Starfall.Muted", 0);
+        // Audio/settings are user preferences, not run progress. Keep them across builds.
+        string[] keep = {
+            "Starfall.Muted",
+            "Starfall.Settings.Master", "Starfall.Settings.Music", "Starfall.Settings.Sfx",
+            "Starfall.Settings.Quality", "Starfall.Settings.Fps", "Starfall.Settings.DamageNumbers",
+            "Starfall.Settings.Shake", "Starfall.Settings.Particles", "Starfall.Settings.Language",
+            "Starfall.Settings.AutoPause"
+        };
+        var saved = new Dictionary<string, int>();
+        foreach (string key in keep) if (PlayerPrefs.HasKey(key)) saved[key] = PlayerPrefs.GetInt(key);
         PlayerPrefs.DeleteAll();
-        if (muted != 0) PlayerPrefs.SetInt("Starfall.Muted", muted);
+        foreach (var pair in saved) PlayerPrefs.SetInt(pair.Key, pair.Value);
         PlayerPrefs.SetString("Starfall.SaveBuild", buildId);
         PlayerPrefs.Save();
     }
@@ -137,14 +153,14 @@ public partial class GameBootstrap : MonoBehaviour
         Game = this;
         ResetSaveForNewBuild();
         InitializeMobileMode();
-        AudioListener.volume = PlayerPrefs.GetInt("Starfall.Muted", 0) == 1 ? 0 : 1;
         var installed = new HashSet<string>(Font.GetOSInstalledFontNames());
         uiFont = PickFont(installed, "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", "Arial");
         displayFont = PickFont(installed, "Bahnschrift SemiCondensed", "Bahnschrift SemiBold", "Bahnschrift", "Segoe UI Semibold", "Arial");
         if (uiFont == null) uiFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         if (displayFont == null) displayFont = uiFont;
         ConfigureFonts();
-        Application.targetFrameRate = Application.isMobilePlatform ? 60 : 120;
+        GameSettings.Load();
+        GameSettings.Apply();
         Time.timeScale = 1f;
         BuildWorld();
         BuildUI();
@@ -158,6 +174,11 @@ public partial class GameBootstrap : MonoBehaviour
     {
         UpdateMusic();
         UpdateGameplayUiScale();
+        if (settingsOpen)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape)) CloseSettings();
+            return;
+        }
         if (State == RunState.CharacterSheet)
         {
             if (Input.GetKeyDown(KeyCode.C) || Input.GetKeyDown(KeyCode.Escape)) ClosePilotSheet();
@@ -272,25 +293,108 @@ public partial class GameBootstrap : MonoBehaviour
     private void LateUpdate()
     {
         UpdateMobileViewport();
-        if (worldCamera == null || Player == null) return;
-        Vector3 target = Boss != null && Boss.IsAnchored ? Boss.transform.position : Player.transform.position;
-        float viewWidth = worldCamera.orthographicSize * worldCamera.aspect;
-        target.x = Mathf.Clamp(target.x, -Mathf.Max(0, GameRules.HalfWidth - viewWidth), Mathf.Max(0, GameRules.HalfWidth - viewWidth));
-        target.y = Mathf.Clamp(target.y, -Mathf.Max(0, GameRules.HalfHeight - worldCamera.orthographicSize), Mathf.Max(0, GameRules.HalfHeight - worldCamera.orthographicSize));
-        if (cameraShakeTimer > 0)
+        if (worldCamera == null || Player == null || State != RunState.Playing) return;
+
+        float dt = Mathf.Min(.05f, Time.unscaledDeltaTime);
+        float halfHeight = worldCamera.orthographicSize;
+        float halfWidth = halfHeight * worldCamera.aspect;
+
+        Vector3 playerPosition = Player.transform.position;
+        if (!cameraReady)
         {
-            cameraShakeTimer -= Time.unscaledDeltaTime;
-            Vector2 offset = Random.insideUnitCircle * cameraShakeStrength * Mathf.Clamp01(cameraShakeTimer * 4f);
-            target += new Vector3(offset.x, offset.y, 0);
+            cameraReady = true;
+            cameraPlayerVelocity = Vector2.zero;
+            cameraBasePosition = ClampCameraPosition(PlayerCameraFocus(playerPosition), halfWidth, halfHeight);
+            lastCameraPlayerPosition = playerPosition;
+            ApplyCameraPosition(dt);
+            return;
         }
-        worldCamera.transform.position = Vector3.Lerp(worldCamera.transform.position, new Vector3(target.x, target.y, -20), Time.unscaledDeltaTime * 5.4f);
+
+        float moveDt = Mathf.Max(.0001f, Time.deltaTime);
+        Vector2 instantVelocity = ((Vector2)playerPosition - (Vector2)lastCameraPlayerPosition) / moveDt;
+        cameraPlayerVelocity = Vector2.Lerp(cameraPlayerVelocity, instantVelocity, 1f - Mathf.Exp(-12f * dt));
+        lastCameraPlayerPosition = playerPosition;
+
+        Vector3 focus = PlayerCameraFocus(playerPosition);
+        Vector3 desired = cameraBasePosition;
+        if (Boss != null)
+        {
+            // Keep the player and the boss in the same composition without
+            // letting a distant boss pull the player completely off-screen.
+            Vector2 bossPosition = Boss.transform.position;
+            Vector2 towardBoss = bossPosition - (Vector2)playerPosition;
+            if (towardBoss.magnitude > 6.5f)
+                bossPosition = (Vector2)playerPosition + towardBoss.normalized * 6.5f;
+            focus = Vector2.Lerp(playerPosition, bossPosition, TouchControls ? .60f : .65f);
+            desired = new Vector3(focus.x, focus.y, -20f);
+        }
+        else
+        {
+            float deadX = halfWidth * (TouchControls ? .18f : .14f);
+            float deadY = halfHeight * (TouchControls ? .12f : .10f);
+            float dx = focus.x - cameraBasePosition.x;
+            float dy = focus.y - cameraBasePosition.y;
+            if (Mathf.Abs(dx) > deadX)
+                desired.x += dx - Mathf.Sign(dx) * deadX;
+            if (Mathf.Abs(dy) > deadY)
+                desired.y += dy - Mathf.Sign(dy) * deadY;
+        }
+
+        desired = ClampCameraPosition(desired, halfWidth, halfHeight);
+        float sharpness = Boss != null ? 5.5f : TouchControls ? 10f : 8.5f;
+        cameraBasePosition = Vector3.Lerp(cameraBasePosition, desired, 1f - Mathf.Exp(-sharpness * dt));
+        ApplyCameraPosition(dt);
     }
+
+    private Vector3 PlayerCameraFocus(Vector3 playerPosition)
+    {
+        Vector2 lead = cameraPlayerVelocity * (TouchControls ? .30f : .45f);
+        lead = Vector2.ClampMagnitude(lead, TouchControls ? .35f : .55f);
+        Vector2 focus = (Vector2)playerPosition + lead;
+        return new Vector3(focus.x, focus.y, -20f);
+    }
+
+    private Vector3 ClampCameraPosition(Vector3 position, float halfWidth, float halfHeight)
+    {
+        // Let the camera reveal a little of the void outside the arena at the
+        // edges. This keeps the player away from the HUD and touch controls
+        // instead of pinning them to the screen edge.
+        float limitX = Mathf.Max(0f, GameRules.HalfWidth - halfWidth) + CameraOverscan;
+        float limitY = Mathf.Max(0f, GameRules.HalfHeight - halfHeight) + CameraOverscan;
+        position.x = Mathf.Clamp(position.x, -limitX, limitX);
+        position.y = Mathf.Clamp(position.y, -limitY, limitY);
+        position.z = -20f;
+        return position;
+    }
+
+    private void ApplyCameraPosition(float dt)
+    {
+        Vector2 shake = Vector2.zero;
+        if (cameraShakeTimer > 0f)
+        {
+            cameraShakeTimer -= dt;
+            float decay = Mathf.Clamp01(cameraShakeTimer * 4f);
+            shake = Random.insideUnitCircle * cameraShakeStrength * decay;
+        }
+        worldCamera.transform.position = new Vector3(
+            cameraBasePosition.x + shake.x,
+            cameraBasePosition.y + shake.y,
+            -20f);
+    }
+
+    private void ResetCameraRig()
+    {
+        cameraReady = false;
+        cameraPlayerVelocity = Vector2.zero;
+        if (Player != null) lastCameraPlayerPosition = Player.transform.position;
+    }
+
 
     private void BuildWorld()
     {
         worldCamera = Camera.main;
         if (worldCamera == null) { var cameraObject = new GameObject("Main Camera"); cameraObject.tag = "MainCamera"; worldCamera = cameraObject.AddComponent<Camera>(); }
-        worldCamera.orthographic = true; worldCamera.orthographicSize = 7.2f; worldCamera.transform.position = new Vector3(0, 0, -20); worldCamera.backgroundColor = new Color(.035f, .045f, .075f); worldCamera.clearFlags = CameraClearFlags.SolidColor;
+        worldCamera.orthographic = true; worldCamera.orthographicSize = 7.2f; worldCamera.transform.position = new Vector3(0, 0, -20); worldCamera.backgroundColor = new Color(.008f, .012f, .022f); worldCamera.clearFlags = CameraClearFlags.SolidColor;
         if (FindFirstObjectByType<AudioListener>() == null) worldCamera.gameObject.AddComponent<AudioListener>();
         CreateArena();
     }
@@ -351,19 +455,65 @@ public partial class GameBootstrap : MonoBehaviour
         // let the floor extend beyond the wider arena bounds.
         float nativeWidth = sprite.rect.width / sprite.pixelsPerUnit;
         float nativeHeight = sprite.rect.height / sprite.pixelsPerUnit;
-        float floorWidth = GameRules.HalfWidth * 2f + 2f;
-        float floorHeight = floorWidth * nativeHeight / nativeWidth;
-        arenaFloorRenderer.transform.localScale = new Vector3(floorWidth / nativeWidth, floorHeight / nativeHeight, 1);
+        // Preserve the arena texture's native aspect ratio. Cover the playable
+        // rectangle, then let the dark void frame hide the overflow.
+        float textureAspect = nativeWidth / nativeHeight;
+        float arenaAspect = (GameRules.HalfWidth * 2f) / (GameRules.HalfHeight * 2f);
+        float uniformScale = textureAspect >= arenaAspect
+            ? (GameRules.HalfHeight * 2f) / nativeHeight
+            : (GameRules.HalfWidth * 2f) / nativeWidth;
+        arenaFloorRenderer.transform.localScale = new Vector3(uniformScale, uniformScale, 1);
     }
 
     private void DrawBoundary()
     {
+        DrawVoidMask();
         for (int i = 0; i < 4; i++)
         {
-            var edge = new GameObject("Ruin boundary"); edge.transform.position = i < 2 ? new Vector3(0, i == 0 ? -GameRules.HalfHeight : GameRules.HalfHeight, 1) : new Vector3(i == 2 ? -GameRules.HalfWidth : GameRules.HalfWidth, 0, 1);
-            edge.transform.localScale = i < 2 ? new Vector3(GameRules.HalfWidth * 2, .13f, 1) : new Vector3(.13f, GameRules.HalfHeight * 2, 1);
-            var renderer = edge.AddComponent<SpriteRenderer>(); renderer.sprite = Shape("square"); renderer.color = new Color(.18f, .66f, .64f, .6f); renderer.sortingOrder = -9;
+            bool horizontal = i < 2;
+            bool positive = i == 1 || i == 3;
+            float sign = positive ? 1f : -1f;
+            float edge = horizontal ? GameRules.HalfHeight * sign : GameRules.HalfWidth * sign;
+            Vector3 edgePosition = horizontal ? new Vector3(0, edge, 1) : new Vector3(edge, 0, 1);
+            Vector3 edgeScale = horizontal
+                ? new Vector3(GameRules.HalfWidth * 2f, .14f, 1)
+                : new Vector3(.14f, GameRules.HalfHeight * 2f, 1);
+            Vector3 inset = horizontal ? new Vector3(0, -sign * .15f, 0) : new Vector3(-sign * .15f, 0, 0);
+            Vector3 insetScale = horizontal
+                ? new Vector3(GameRules.HalfWidth * 2f, .30f, 1)
+                : new Vector3(.30f, GameRules.HalfHeight * 2f, 1);
+
+            Vector3 glowScale = horizontal
+                ? new Vector3(GameRules.HalfWidth * 2f, .34f, 1)
+                : new Vector3(.34f, GameRules.HalfHeight * 2f, 1);
+
+            BoundaryStrip("Boundary inner shadow", edgePosition + inset, insetScale, new Color(.005f, .012f, .02f, .82f), -29);
+            BoundaryStrip("Boundary glow", edgePosition, glowScale, new Color(.14f, .75f, .72f, .09f), -10);
+            BoundaryStrip("Ruin boundary", edgePosition, edgeScale, new Color(.22f, .96f, .90f, .92f), -9);
         }
+    }
+
+    private void DrawVoidMask()
+    {
+        const float depth = 24f;
+        float width = GameRules.HalfWidth * 2f + depth * 2f;
+        float height = GameRules.HalfHeight * 2f + depth * 2f;
+        Color voidColor = new Color(.008f, .012f, .022f, 1f);
+        BoundaryStrip("Void top", new Vector3(0, GameRules.HalfHeight + depth * .5f, 1f), new Vector3(width, depth, 1f), voidColor, -28);
+        BoundaryStrip("Void bottom", new Vector3(0, -GameRules.HalfHeight - depth * .5f, 1f), new Vector3(width, depth, 1f), voidColor, -28);
+        BoundaryStrip("Void left", new Vector3(-GameRules.HalfWidth - depth * .5f, 0, 1f), new Vector3(depth, height, 1f), voidColor, -28);
+        BoundaryStrip("Void right", new Vector3(GameRules.HalfWidth + depth * .5f, 0, 1f), new Vector3(depth, height, 1f), voidColor, -28);
+    }
+
+    private void BoundaryStrip(string label, Vector3 position, Vector3 scale, Color color, int order)
+    {
+        var strip = new GameObject(label);
+        strip.transform.position = position;
+        strip.transform.localScale = scale;
+        var renderer = strip.AddComponent<SpriteRenderer>();
+        renderer.sprite = Shape("square");
+        renderer.color = color;
+        renderer.sortingOrder = order;
     }
 
     private void CreateDeco()
@@ -412,7 +562,7 @@ public partial class GameBootstrap : MonoBehaviour
             characterFeatureEdge.color = UiKit.Alpha(selected.Accent, .62f);
             characterFeatureGlow.color = UiKit.Alpha(selected.Accent, .3f);
             characterFeatureName.text = selected.Name;
-            characterFeatureCallSign.text = selected.CallSign + "   //   " + selected.Gender;
+            characterFeatureCallSign.text = selected.CallSign;
             characterFeatureQuote.text = CharacterQuote(selected.Id);
             characterFeatureStory.text = selected.Story;
             characterFeatureWeapon.text = selected.Weapon;
@@ -562,12 +712,13 @@ public partial class GameBootstrap : MonoBehaviour
         Stats = new RunStats(); CharacterRoster.ApplyLoadout(SelectedCharacter, Stats);
         if (pilotPortrait != null) pilotPortrait.sprite = SquarePortrait(CurrentCharacter.Portrait);
         Player = new GameObject("Runner").AddComponent<PlayerActor>(); Player.transform.position = Vector3.zero;
+        ResetCameraRig();
         Elapsed = 0; Kills = 0; Level = 1; Xp = 0; spawnTimer = .8f; chestTimer = 32f; lastWave = 1; normalRerolls = 3; weaponRerolls = 1;
         bossStarted = false; warnedBossStage = 0; bossWarningUntil = 0f; if (bossWarningPanel != null) bossWarningPanel.SetActive(false); bossTransitionTimer = 0; bossRewardTimer = 0; pendingBossRewardStage = rewardBossStage = 0; victoryPending = false; victoryTimer = 0; deathSequence = false; deathSequenceTimer = 0; bossHitStopTimer = 0; BossStage = 0; BossesDefeated = 0; Boss = null; enemies.Clear(); SetArenaStage(1);
         for (int i = 0; i < bossRewardsClaimed.Length; i++) bossRewardsClaimed[i] = false;
         Time.timeScale = 1f;
         hpDisplay = hpGhostDisplay = dashDisplay = 1f; xpDisplay = 0f; bossDisplay = 1f; bannerUntil = 0f;
-        RefreshUI(); ShowBanner(GameRules.StageName(1) + "  /  SURVIVE", GameRules.Cyan);
+        RefreshUI(); ShowBanner(GameRules.StageName(1), GameRules.Cyan);
     }
 
     private void RestartRun() { Time.timeScale = 1; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
@@ -609,12 +760,21 @@ public partial class GameBootstrap : MonoBehaviour
         return true;
     }
 
-    public List<EnemyActor> Nearby(Vector2 point, float radius, int max = 32)
+    public List<EnemyActor> Nearby(Vector2 point, float radius, int max = 32, bool sorted = true)
     {
-        enemies.RemoveAll(e => e == null); var found = new List<EnemyActor>(); float maxDistance = radius * radius;
-        for (int i = 0; i < enemies.Count; i++) if (enemies[i] != null && (enemies[i].transform.position - (Vector3)point).sqrMagnitude <= maxDistance)
-        { found.Add(enemies[i]); if (found.Count >= max) break; }
-        found.Sort((a, b) => (a.transform.position - (Vector3)point).sqrMagnitude.CompareTo((b.transform.position - (Vector3)point).sqrMagnitude)); return found;
+        var found = nearbyBuffer;
+        found.Clear();
+        float maxDistance = radius * radius;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            var enemy = enemies[i];
+            if (enemy == null || (enemy.transform.position - (Vector3)point).sqrMagnitude > maxDistance) continue;
+            found.Add(enemy);
+            if (found.Count >= max) break;
+        }
+        if (sorted && found.Count > 1)
+            found.Sort((a, b) => (a.transform.position - (Vector3)point).sqrMagnitude.CompareTo((b.transform.position - (Vector3)point).sqrMagnitude));
+        return found;
     }
 
     private static string ArtPath(string name)
@@ -725,7 +885,7 @@ public partial class GameBootstrap : MonoBehaviour
             return;
         }
         pendingBossRewardStage = stage; bossRewardTimer = 1.15f; bossHitStopTimer = .14f; Time.timeScale = .16f;
-        ShowBanner(GameRules.BossName(stage) + "  /  CORE EXPOSED", GameRules.BossColor(stage));
+        ShowBanner(GameRules.BossName(stage) + "  /  核心暴露", GameRules.BossColor(stage));
     }
     private void ApplyBossReward(int stage, int rewardId)
     {
@@ -734,15 +894,14 @@ public partial class GameBootstrap : MonoBehaviour
         switch (rewardId)
         {
             case 0:
-                Stats.CoreDamageMultiplier *= 1.20f;
-                Stats.CoreHasteMultiplier *= 1.15f;
+                Stats.CoreDamageMultiplier *= 1.30f;
+                Stats.CoreHasteMultiplier *= 1.20f;
                 Stats.Crit += 0.20f;
                 break;
             case 1:
-                Stats.MaxHealth += 60;
-                Stats.Armor += .15f;
-                Stats.CoreSpeedMultiplier *= 1.18f;
-                Stats.Regeneration += 1f;
+                Stats.MaxHealth += 30;
+                Stats.Armor += .10f;
+                Stats.Regeneration += 2f;
                 Stats.DamageImmunityChance = Mathf.Min(.9f, Stats.DamageImmunityChance + GameRules.PhoenixDamageImmunity);
                 break;
             default:
@@ -758,13 +917,16 @@ public partial class GameBootstrap : MonoBehaviour
     {
         switch (stage)
         {
-            case 1: return "THE DREAD WARDEN  /  01  ·  噬影守望者";
-            case 2: return "THE ECHO HERALD  /  02  ·  回响先驱";
-            default: return "THE STAR EATER  /  03  ·  星蚀巨兽";
+            case 1: return "噬影守望者";
+            case 2: return "回响先驱";
+            default: return "星蚀巨兽";
         }
     }
     public void ShakeCamera(float strength, float duration)
-    { cameraShakeStrength = Mathf.Max(cameraShakeStrength, strength); cameraShakeTimer = Mathf.Max(cameraShakeTimer, duration); }
+    {
+        cameraShakeStrength = Mathf.Max(cameraShakeStrength, strength * ScreenShakeScale);
+        cameraShakeTimer = Mathf.Max(cameraShakeTimer, duration);
+    }
     public void Finish(bool victory)
     {
         if (State == RunState.Victory || State == RunState.Defeat) return;

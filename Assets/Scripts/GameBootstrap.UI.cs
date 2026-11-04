@@ -66,7 +66,7 @@ public partial class GameBootstrap
         Art(panel, "Right mark", UiKit.Diamond, UiKit.Alpha(GameRules.Pink, 1f), AnchorCC, new Vector2(310, 0), new Vector2(10, 10));
         bossWarningTitle = Ct(panel, "WARNING", 46, new Vector2(0, -24), new Vector2(600, 56), Color.white, FontStyle.Bold, displayFont);
         GlowText(bossWarningTitle, UiKit.Alpha(GameRules.Pink, .5f), 2f);
-        bossWarningSub = Ct(panel, "强敌接近  /  BOSS INCOMING", 13, new Vector2(0, -86), new Vector2(600, 20), UiKit.TextMain, FontStyle.Bold);
+        bossWarningSub = Ct(panel, "强敌接近", 13, new Vector2(0, -86), new Vector2(600, 20), UiKit.TextMain, FontStyle.Bold);
         bossWarningPanel.SetActive(false);
     }
 
@@ -91,7 +91,7 @@ public partial class GameBootstrap
         Art(panel, "Accent", UiKit.Solid, UiKit.Alpha(GameRules.Gold, .9f), AnchorTL, new Vector2(12, -12), new Vector2(2, 20));
         clockText = Lt(panel, "00:00", 26, new Vector2(14, -8), new Vector2(120, 32), UiKit.TextMain, FontStyle.Bold, displayFont);
         DropShadow(clockText, -2f);
-        Rt(panel, UiKit.Track("LEVEL"), 7, new Vector2(-12, -9), new Vector2(70, 10), UiKit.TextMute, FontStyle.Bold);
+        Rt(panel, "等级", 9, new Vector2(-12, -7), new Vector2(70, 12), UiKit.TextMute, FontStyle.Bold);
         levelText = Rt(panel, "01", 16, new Vector2(-12, -20), new Vector2(70, 20), GameRules.Gold, FontStyle.Bold, displayFont);
         waveText = Lt(panel, GameRules.StageName(1), 12, new Vector2(14, -42), new Vector2(touchControls ? 224f : 192f, 28), UiKit.TextMain, FontStyle.Bold);
         waveLabelText = Lt(panel, UiKit.Track("WAVE 01 / 18"), 8, new Vector2(14, -70), new Vector2(touchControls ? 170f : 150f, 12), UiKit.TextMute, FontStyle.Bold);
@@ -105,13 +105,13 @@ public partial class GameBootstrap
         var panel = Frame(hudRoot.transform, "Vitals", AnchorTL, new Vector2(22, -20), new Vector2(276, 84), GameRules.Pink, .88f);
         healthEdge = panel.Find("Edge").GetComponent<Image>();
         Art(panel, "Pulse dot", UiKit.Diamond, UiKit.Alpha(GameRules.Pink, .95f), AnchorTL, new Vector2(13, -9), new Vector2(5, 5));
-        Lt(panel, UiKit.Track("INTEGRITY"), 10, new Vector2(24, -7), new Vector2(150, 12), UiKit.TextDim, FontStyle.Bold);
+        Lt(panel, "生命", 12, new Vector2(24, -5), new Vector2(150, 16), UiKit.TextDim, FontStyle.Bold);
         healthText = Rt(panel, "100 / 100", 16, new Vector2(-12, -4), new Vector2(150, 18), UiKit.TextMain, FontStyle.Bold, displayFont);
         hpFill = Bar(panel, "Health fill", 14f, 14f, -29f, 8f, new Color(.16f, .07f, .1f, .85f), GameRules.Pink, new Color(1, 1, 1, .22f), out hpGlow, out hpGhost, 8);
         HLine(panel, "Divider", 14f, -43f, 1f, new Color(1, 1, 1, .07f));
         Art(panel, "Dash dot", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .9f), AnchorTL, new Vector2(13, -49), new Vector2(5, 5));
-        Lt(panel, UiKit.Track("DASH"), 10, new Vector2(24, -47), new Vector2(120, 12), UiKit.TextDim, FontStyle.Bold);
-        dashText = Rt(panel, "READY", 13, new Vector2(-12, -45), new Vector2(140, 16), GameRules.Cyan, FontStyle.Bold);
+        Lt(panel, "冲刺", 12, new Vector2(24, -45), new Vector2(120, 16), UiKit.TextDim, FontStyle.Bold);
+        dashText = Rt(panel, "就绪", 13, new Vector2(-12, -45), new Vector2(140, 16), GameRules.Cyan, FontStyle.Bold);
         Image dashGlow;
         dashFill = Bar(panel, "Dash cooldown", 14f, 14f, -67f, 6f, new Color(.08f, .13f, .16f, .9f), GameRules.Cyan, new Color(1, 1, 1, .16f), out dashGlow, out _, 0);
     }
@@ -179,7 +179,7 @@ public partial class GameBootstrap
         bossPortrait = Art(hex, "Boss portrait", null, Color.white, new Vector2(0, 0), new Vector2(1, 1), AnchorCC, Vector2.zero, new Vector2(-8, -8));
         bossPortrait.preserveAspect = true;
         Art(hex, "Hex edge", UiKit.HexEdge, UiKit.Alpha(GameRules.Pink, .75f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        bossHeader = MakeText(boss, "Boss title", "THE DREAD WARDEN", 13, TextAnchor.MiddleLeft, AnchorTL, AnchorTL, AnchorTL, new Vector2(96, -11), new Vector2(370, 22), GameRules.Pink, FontStyle.Bold, null);
+        bossHeader = MakeText(boss, "Boss title", "噬影守望者", 13, TextAnchor.MiddleLeft, AnchorTL, AnchorTL, AnchorTL, new Vector2(96, -11), new Vector2(370, 22), GameRules.Pink, FontStyle.Bold, null);
         bossText = Lm(boss, "PHASE I  /  HUNTER", 10, new Vector2(96, -35), new Vector2(330, 16), UiKit.TextDim);
         Rt(boss, UiKit.Track("ARENA 01"), 9, new Vector2(-18, -13), new Vector2(120, 14), UiKit.TextMute, FontStyle.Bold);
         bossFill = Bar(boss, "Boss health fill", 94f, 22f, -58f, 9f, new Color(.18f, .06f, .1f, .9f), GameRules.Pink, new Color(1, 1, 1, .25f), out bossGlow, out _, 4);
@@ -203,9 +203,14 @@ public partial class GameBootstrap
     {
         hintText = Mc(hudRoot.transform, "WASD / 方向键  移动     空格  冲刺     自动攻击     C  角色     ESC  暂停", 10, UiKit.TextMute, FontStyle.Bold);
         hintText.rectTransform.anchorMin = new Vector2(.5f, 0); hintText.rectTransform.anchorMax = new Vector2(.5f, 0);
-        if (touchControls) { hintText.text = "左侧摇杆移动     右侧点击冲刺     武器自动攻击"; hintText.fontSize = 12; }
-        hintText.rectTransform.pivot = new Vector2(.5f, 0); hintText.rectTransform.anchoredPosition = new Vector2(0f, 18);
-        hintText.rectTransform.sizeDelta = new Vector2(touchControls ? 640f : 560f, 18);
+        if (touchControls)
+        {
+            hintText.text = "左侧任意位置拖动移动     右下按钮冲刺     武器自动攻击";
+            hintText.fontSize = 14;
+            DropShadow(hintText, -1.5f);
+        }
+        hintText.rectTransform.pivot = new Vector2(.5f, 0); hintText.rectTransform.anchoredPosition = new Vector2(0f, touchControls ? 28f : 18f);
+        hintText.rectTransform.sizeDelta = new Vector2(touchControls ? 720f : 560f, 20);
     }
 
     // --------------------------------------------------------------- helpers
@@ -285,6 +290,7 @@ public partial class GameBootstrap
         text.text = value; text.font = font != null ? font : uiFont; text.fontSize = size; text.alignment = align; text.color = color; text.fontStyle = style;
         text.horizontalOverflow = HorizontalWrapMode.Wrap; text.verticalOverflow = VerticalWrapMode.Overflow;
         text.lineSpacing = 1.14f; text.raycastTarget = false;
+        text.gameObject.AddComponent<LocalizedText>().Bind(text);
         return text;
     }
 

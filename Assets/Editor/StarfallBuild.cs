@@ -31,7 +31,7 @@ public static class StarfallBuild
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(scenePath, true) };
         PlayerSettings.companyName = "Starfall Studio";
         PlayerSettings.productName = "Starfall - The Last Light";
-        PlayerSettings.bundleVersion = "1.1";
+        PlayerSettings.bundleVersion = "1.2";
         PlayerSettings.defaultScreenWidth = 1440;
         PlayerSettings.defaultScreenHeight = 810;
         PlayerSettings.resizableWindow = true;
@@ -81,14 +81,25 @@ public static class StarfallBuild
     private static void BuildPlayer(bool development)
     {
         Prepare();
-        string output = Path.GetFullPath("outputs/StarfallWindows/Starfall.exe");
+        // Optional "-starfallBuildDir <folder>" keeps validation builds away from the shipped outputs folder.
+        string customDir = CommandLineValue("-starfallBuildDir");
+        string output = Path.GetFullPath(string.IsNullOrEmpty(customDir) ? "outputs/StarfallWindows/Starfall.exe" : Path.Combine(customDir, "Starfall.exe"));
         Directory.CreateDirectory(Path.GetDirectoryName(output));
         var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
             scenes = new[] { "Assets/Scenes/Main.unity" }, locationPathName = output,
             target = BuildTarget.StandaloneWindows64, options = development ? BuildOptions.Development : BuildOptions.None
         });
-        Directory.CreateDirectory("work");
-        File.WriteAllText("work/build-result.txt", report.summary.result + "\nErrors: " + report.summary.totalErrors + "\n" + output);
+        string resultFile = string.IsNullOrEmpty(customDir) ? "work/build-result.txt" : Path.Combine(Path.GetDirectoryName(output), "build-result.txt");
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(resultFile)));
+        File.WriteAllText(resultFile, report.summary.result + "\nErrors: " + report.summary.totalErrors + "\n" + output);
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Starfall build failed.");
+    }
+
+    private static string CommandLineValue(string flag)
+    {
+        string[] args = Environment.GetCommandLineArgs();
+        for (int i = 0; i < args.Length - 1; i++)
+            if (string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase)) return args[i + 1];
+        return null;
     }
 }
