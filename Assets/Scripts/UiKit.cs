@@ -130,6 +130,63 @@ public static class UiKit
     public static Sprite Soft => Get("soft", () => Build("Soft", 64, 64, 18f, (u, v) => RoundedAlpha(u, v, 64, 64, 14f, 0f)));
     public static Sprite SoftEdge => Get("soft-edge", () => Build("Soft edge", 64, 64, 18f, (u, v) => RoundedAlpha(u, v, 64, 64, 14f, 2f)));
 
+    public static Sprite PilotButtonEngraving => Get("pilot-button-engraving", () => Build("Pilot button engraving", 688, 128, 0f, (u, v) =>
+    {
+        const int width = 344, height = 64;
+        var position = new Vector2(u * width, v * height);
+        var labelOffset = position - new Vector2(width * .5f, height * .5f);
+        float labelDistance = new Vector2(labelOffset.x / 63f, labelOffset.y / 20f).magnitude;
+        float labelFade = Mathf.SmoothStep(.18f, 1f, Mathf.InverseLerp(.54f, 1.24f, labelDistance));
+
+        const float goldenRatio = 1.618034f;
+        const float firstGap = 34f;
+        const float innerRadius = 205f;
+        const float secondRadius = innerRadius + firstGap;
+        const float thirdRadius = secondRadius + firstGap * goldenRatio;
+        const float outerRadius = thirdRadius + firstGap * goldenRatio * goldenRatio;
+
+        var fromCenter = position - new Vector2(364f, -160f);
+        float radius = fromCenter.magnitude;
+        float Stroke(float orbitRadius) => Mathf.Clamp01(1.07f - Mathf.Abs(radius - orbitRadius));
+        float innerArcs = Mathf.Max(Stroke(innerRadius) * .9f, Stroke(secondRadius) * .76f);
+        float outerArcs = Mathf.Max(Stroke(thirdRadius) * .69f, Stroke(outerRadius) * .61f);
+
+        float angle = Mathf.Atan2(fromCenter.y, -fromCenter.x);
+        float ArcFragment(float orbitRadius, float startAngle, float endAngle)
+        {
+            float distanceFromEnd = Mathf.Min(angle - startAngle, endAngle - angle) * orbitRadius;
+            float taper = Mathf.SmoothStep(0f, 1f, (distanceFromEnd + .5f) / 4f);
+            return Mathf.Clamp01(.88f - Mathf.Abs(radius - orbitRadius)) * taper;
+        }
+
+        float Tick(float orbitRadius, float tickAngle) =>
+            Mathf.Clamp01(.95f - Mathf.Abs(angle - tickAngle) * orbitRadius) *
+            Mathf.Clamp01(3.2f - Mathf.Abs(radius - orbitRadius));
+        float Node(float orbitRadius, float nodeAngle)
+        {
+            var offset = new Vector2(radius - orbitRadius, (angle - nodeAngle) * orbitRadius);
+            return Mathf.Clamp01(2.05f - offset.magnitude);
+        }
+
+        float leftTicks = Mathf.Max(Tick(outerRadius, .49f), Tick(outerRadius, .53f));
+        float rightTicks = Mathf.Max(Tick(innerRadius, 1.08f), Tick(innerRadius, 1.145f));
+        float ticks = Mathf.Max(leftTicks, rightTicks) * .6f;
+        float nodes = Mathf.Max(Node(outerRadius, .58f), Node(secondRadius, 1.045f)) * .84f;
+
+        float outerDouble = ArcFragment(outerRadius + 6f, .455f, .609f);
+        float innerDouble = Mathf.Max(ArcFragment(innerRadius - 5.5f, 1f, 1.29f),
+            ArcFragment(secondRadius + 5f, .982f, 1.12f));
+        float doubleLines = Mathf.Max(outerDouble, innerDouble) * .62f;
+        float leftDashes = Mathf.Max(ArcFragment(outerRadius - 31f, .506f, .541f),
+            ArcFragment(outerRadius - 31f, .563f, .591f));
+        float rightDashes = Mathf.Max(ArcFragment(secondRadius - 17f, 1.072f, 1.125f),
+            ArcFragment(secondRadius - 17f, 1.157f, 1.208f));
+        float shortLines = Mathf.Max(leftDashes, rightDashes) * .65f;
+        float details = Mathf.Max(Mathf.Max(ticks, nodes), Mathf.Max(doubleLines, shortLines));
+        float pattern = Mathf.Max(Mathf.Max(innerArcs, outerArcs), details);
+        return pattern * labelFade * RoundedAlpha(u, v, width, height, 15f, 0f);
+    }));
+
     public static Sprite SoftSmall => Get("soft-small", () => Build("Soft small", 24, 24, 9f, (u, v) => RoundedAlpha(u, v, 24, 24, 7f, 0f)));
     public static Sprite SoftSmallEdge => Get("soft-small-edge", () => Build("Soft small edge", 24, 24, 9f, (u, v) => RoundedAlpha(u, v, 24, 24, 7f, 1.6f)));
 

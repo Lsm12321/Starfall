@@ -37,11 +37,11 @@ public partial class GameBootstrap
         Art(panel, "Scrim fade", UiKit.GradientLeft, new Color(.012f, .02f, .032f, .96f), new Vector2(.3f, 0), new Vector2(.82f, 1), AnchorCL, Vector2.zero, Vector2.zero);
         Art(panel, "Scrim top", UiKit.GradientUp, new Color(.012f, .02f, .032f, .82f), new Vector2(0, .74f), new Vector2(1, 1), AnchorCC, Vector2.zero, Vector2.zero);
         Art(panel, "Scrim bottom", UiKit.GradientDown, new Color(.006f, .012f, .02f, .96f), new Vector2(0, 0), new Vector2(1, .44f), AnchorCC, Vector2.zero, Vector2.zero);
-        Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .72f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(panel, "Scanlines", UiKit.Scanlines, new Color(0, 0, 0, .45f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        var grid = Art(panel, "Archive grid", UiKit.Grid, UiKit.Alpha(GameRules.Cyan, .035f), new Vector2(0, 0), new Vector2(.62f, 1), AnchorCC, Vector2.zero, Vector2.zero);
+        Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .52f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        Art(panel, "Scanlines", UiKit.Scanlines, new Color(0, 0, 0, .14f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        var grid = Art(panel, "Archive grid", UiKit.Grid, UiKit.Alpha(GameRules.Cyan, .018f), new Vector2(0, 0), new Vector2(.62f, 1), AnchorCC, Vector2.zero, Vector2.zero);
         grid.type = Image.Type.Tiled;
-        BuildParticles(panel, 46);
+        BuildParticles(panel, 26);
 
         if (touchControls)
         {
@@ -51,32 +51,35 @@ public partial class GameBootstrap
 
         var left = Node(panel, "Menu left", AnchorTL, Vector2.zero, new Vector2(1440, 810));
         left.localScale = Vector3.one * (touchControls ? 1.11f : 1.04f);
+        float menuShift = touchControls ? 44f : 0f;
 
-        Art(left, "Title glow", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .13f), AnchorTL, new Vector2(56, -96), new Vector2(720, 320));
+        Art(left, "Title glow", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .045f), AnchorTL, new Vector2(56, -96), new Vector2(720, 320));
         Art(left, "Kicker mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .95f), AnchorTL, new Vector2(97, -106), new Vector2(8, 8));
         Lt(left, UiKit.Track("SURVIVOR FILE 001   ·   ASHEN GATE"), 10, new Vector2(114, -102), new Vector2(470, 16), UiKit.Alpha(GameRules.Cyan, .95f), FontStyle.Bold);
         var title = Lt(left, "STARFALL", 80, new Vector2(92, -128), new Vector2(640, 96), UiKit.TextMain, FontStyle.Bold, displayFont);
         GlowText(title, UiKit.Alpha(GameRules.Cyan, .18f), 1.5f);
         DropShadow(title, -4f);
-        Lt(left, "星 陨 · 最 后 的 微 光", 23, new Vector2(96, -228), new Vector2(520, 34), GameRules.Gold, FontStyle.Bold);
-        var rule = Art(left, "Rule", UiKit.GradientRight, UiKit.Alpha(GameRules.Cyan, .8f), AnchorTL, new Vector2(96, -272), new Vector2(300, 2));
-        Art(left, "Rule dot", UiKit.Diamond, GameRules.Cyan, AnchorTL, new Vector2(88, -270), new Vector2(7, 7));
-        Lt(left, "收集星尘，组合武器，穿过不断增强的敌潮，击败苏醒的遗迹守望者。", 15, new Vector2(96, -298), new Vector2(492, 74), UiKit.TextDim, FontStyle.Normal);
-        var deploy = Cta(left, "Select pilot", "选择驾驶员", AnchorTL, new Vector2(96, -392), new Vector2(344, 64), GameRules.Cyan, false, ShowCharacterSelect, 15);
+        Lt(left, "星 陨 · 最 后 的 微 光", 23, new Vector2(96, -228 - menuShift), new Vector2(520, 34), GameRules.Gold, FontStyle.Bold);
+        var rule = Art(left, "Rule", UiKit.GradientRight, UiKit.Alpha(GameRules.Cyan, .8f), AnchorTL, new Vector2(96, -272 - menuShift), new Vector2(300, 2));
+        Art(left, "Rule dot", UiKit.Diamond, GameRules.Cyan, AnchorTL, new Vector2(88, -270 - menuShift), new Vector2(7, 7));
+        Lt(left, "收集星尘，组合武器，穿过不断增强的敌潮，击败苏醒的遗迹守望者。", 15, new Vector2(96, -298 - menuShift), new Vector2(492, 74), UiKit.TextDim, FontStyle.Normal);
+        var deploy = Cta(left, "Select pilot", "选择角色", AnchorTL, new Vector2(96, -392 - menuShift), new Vector2(344, 64), GameRules.Cyan, false, ShowCharacterSelect, 15);
+        var deployHover = deploy.GetComponent<UiHover>();
+        deployHover.fillHot = UiKit.Alpha(UiKit.Mix(UiKit.PanelSoft, GameRules.Cyan, .14f), .94f);
+        deployHover.edgeHot = UiKit.Alpha(GameRules.Cyan, .8f);
+        var engraving = Fill(deploy.transform, "Orbital engraving", UiKit.PilotButtonEngraving, UiKit.Rgb(0x76AEB9, .29f));
+        engraving.rectTransform.SetAsFirstSibling();
         Art(deploy.transform, "Chevron", UiKit.Chevron, GameRules.Cyan, AnchorCR, new Vector2(-22, 0), new Vector2(10, 16));
-        Lt(left, touchControls ? "左侧拖动  移动     右下按钮  冲刺     武器自动攻击" : "WASD / 方向键  移动     空格  冲刺     武器自动攻击", 12, new Vector2(96, -480), new Vector2(520, 20), UiKit.TextMute, FontStyle.Bold);
-        MenuStat(left, "BEST KILLS", PlayerPrefs.GetInt("Starfall.BestKills", 0).ToString("000"), new Vector2(96, -522), GameRules.Cyan);
-        MenuStat(left, "CLEARS", PlayerPrefs.GetInt("Starfall.Wins", 0).ToString("00"), new Vector2(286, -522), GameRules.Gold);
-        Lt(left, "© 2026 STARFALL STUDIO   ·   BUILD 1.0.0", 9, new Vector2(96, -742), new Vector2(420, 14), new Color(1, 1, 1, .22f), FontStyle.Normal);
-        Rt(panel, touchControls ? "STARFALL STUDIO  /  MOBILE" : "STARFALL STUDIO  /  UNITY 6", 9, new Vector2(-26, -26), new Vector2(300, 14), new Color(1, 1, 1, .28f), FontStyle.Bold);
-        AddUtilityButtons(panel);
+        Lt(left, touchControls ? "左侧拖动  移动     右下按钮  冲刺     武器自动攻击" : "WASD / 方向键  移动     空格  冲刺     武器自动攻击", 12, new Vector2(96, -480 - menuShift), new Vector2(520, 20), UiKit.TextMute, FontStyle.Bold);
+        MenuStat(left, "BEST KILLS", PlayerPrefs.GetInt("Starfall.BestKills", 0).ToString("000"), new Vector2(96, -522 - menuShift), GameRules.Cyan);
+        MenuStat(left, "CLEARS", PlayerPrefs.GetInt("Starfall.Wins", 0).ToString("00"), new Vector2(286, -522 - menuShift), GameRules.Gold);
+        AddSettingsButton(panel);
     }
 
     private void MenuStat(Transform parent, string label, string value, Vector2 pos, Color accent)
     {
         var chip = Node(parent, "Menu stat", AnchorTL, pos, new Vector2(176, 58));
-        Art(chip, "Fill", UiKit.Soft, new Color(1, 1, 1, .045f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Fill(chip, "Edge", UiKit.SoftEdge, UiKit.Alpha(accent, .18f));
+        Art(chip, "Rule", UiKit.Solid, UiKit.Alpha(accent, .28f), AnchorTL, new Vector2(0, -4), new Vector2(176, 1));
         Art(chip, "Mark", UiKit.Diamond, UiKit.Alpha(accent, .9f), AnchorTL, new Vector2(12, -13), new Vector2(6, 6));
         Lt(chip, UiKit.Track(label), 9, new Vector2(26, -9), new Vector2(140, 14), UiKit.TextMute, FontStyle.Bold);
         Lt(chip, value, 22, new Vector2(12, -23), new Vector2(150, 30), UiKit.TextMain, FontStyle.Bold, displayFont);
@@ -101,64 +104,78 @@ public partial class GameBootstrap
     private void BuildModal(bool victory, bool defeat)
     {
         var panel = (RectTransform)statePanel.transform;
-        Color accent = victory ? GameRules.Cyan : defeat ? GameRules.Pink : GameRules.Gold;
+        bool paused = State == RunState.Paused;
+        Color accent = paused || victory ? GameRules.Cyan : defeat ? GameRules.Pink : GameRules.Gold;
         Art(panel, "Result scrim", UiKit.Solid, new Color(.004f, .009f, .016f, .9f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .55f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(panel, "Backdrop glow", UiKit.Glow, UiKit.Alpha(accent, .22f), AnchorCC, new Vector2(0, -10), new Vector2(1240, 820));
+        Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .4f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        Art(panel, "Backdrop glow", UiKit.Glow, UiKit.Alpha(accent, paused ? .07f : .14f), AnchorCC, new Vector2(0, -10), new Vector2(1240, 820));
 
-        // Utility buttons belong to the screen corner, not the modal layout, so they never sit on the result frame.
-        var screenRoot = panel;
         if (touchControls)
         {
             panel = Node(panel, "Phone result layout", AnchorCC, Vector2.zero, new Vector2(1440, 810));
             panel.localScale = Vector3.one * MobilePageScale;
         }
-        Art(panel, "Modal backing", UiKit.Soft, new Color(.026f, .047f, .067f, 1f), AnchorCC, Vector2.zero, new Vector2(1098, 638));
         var modal = Frame(panel, "Modal", AnchorCC, Vector2.zero, new Vector2(1100, 640), accent, 1f);
         // GradientUp is opaque at the top and fades out, so the wash no longer leaves a hard band across the portrait.
-        Art(modal, "Accent wash", UiKit.GradientUp, UiKit.Alpha(accent, victory ? .12f : .10f), new Vector2(0, .58f), new Vector2(1, 1), AnchorCC, Vector2.zero, Vector2.zero);
+        Art(modal, "Accent wash", UiKit.GradientUp, UiKit.Alpha(accent, victory ? .08f : .06f), new Vector2(0, .58f), new Vector2(1, 1), AnchorCC, Vector2.zero, Vector2.zero);
 
-        Art(modal, "Emblem glow", UiKit.Glow, UiKit.Alpha(accent, .28f), AnchorTC, new Vector2(0, -4), new Vector2(220, 160));
+        Art(modal, "Emblem glow", UiKit.Glow, UiKit.Alpha(accent, paused ? .08f : .18f), AnchorTC, new Vector2(0, -4), new Vector2(220, 160));
         var emblem = Node(modal, "Emblem", AnchorTC, new Vector2(0, -14), new Vector2(50, 50));
         var ring = Art(emblem, "Ring", UiKit.Ring, UiKit.Alpha(accent, .9f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         ring.gameObject.AddComponent<UiSpin>().degreesPerSecond = 14f;
         Art(emblem, "Core", UiKit.Diamond, UiKit.Alpha(accent, .95f), AnchorCC, Vector2.zero, new Vector2(13, 13));
         Art(emblem, "Core inner", UiKit.Diamond, UiKit.Alpha(Color.white, .85f), AnchorCC, Vector2.zero, new Vector2(6, 6));
 
-        Ct(modal, victory ? UiKit.Track("RUN COMPLETE  /  SECTOR CLEARED") : defeat ? UiKit.Track("RUN OVER  /  SIGNAL LOST") : UiKit.Track("STARFALL  /  PAUSED"), 11, new Vector2(0, -70), new Vector2(700, 16), accent, FontStyle.Bold);
-        var title = Ct(modal, victory ? "THE NIGHT BREAKS" : defeat ? "SIGNAL LOST" : "PAUSED", 46, new Vector2(0, -90), new Vector2(900, 60), UiKit.TextMain, FontStyle.Bold, displayFont);
+        Ct(modal, victory ? UiKit.Track("RUN COMPLETE  /  SECTOR CLEARED") : defeat ? UiKit.Track("RUN OVER  /  SIGNAL LOST") : UiKit.Track("暂停"), 11, new Vector2(0, -70), new Vector2(700, 16), accent, FontStyle.Bold);
+        var title = Ct(modal, victory ? "THE NIGHT BREAKS" : defeat ? "SIGNAL LOST" : "PAUSED", 46, new Vector2(0, touchControls ? -84 : -90), new Vector2(900, touchControls ? 72 : 60), UiKit.TextMain, FontStyle.Bold, displayFont);
         GlowText(title, UiKit.Alpha(accent, .26f), 2f);
-        Ct(modal, victory ? "三位守望者尽数陨落 · 航道已经打开" : defeat ? "灰烬之门吞没了又一名跑者" : "深呼吸，跑者", 15, new Vector2(0, -148), new Vector2(720, 22), UiKit.TextDim);
-        HLine(modal, "Divider", 40f, -170f, 1f, new Color(1, 1, 1, .08f));
+        Ct(modal, victory ? "三位守望者尽数陨落 · 航道已经打开" : defeat ? "灰烬之门吞没了又一名跑者" : "深呼吸，跑者", 15, new Vector2(0, touchControls ? -164 : -148), new Vector2(720, 22), UiKit.TextDim);
+        HLine(modal, "Divider", 40f, touchControls ? -186f : -170f, 1f, new Color(1, 1, 1, .08f));
 
-        // Character portrait and final stats.
-        var portrait = Art(modal, "Result portrait", SpriteResource(CurrentCharacter.Portrait), Color.white, AnchorTL, new Vector2(30, -186), new Vector2(200, 300));
+        var portraitPosition = new Vector2(30, touchControls ? -198 : -186);
+        var portraitSize = paused ? new Vector2(224, 336) : new Vector2(200, 300);
+        var portrait = Art(modal, "Result portrait", SpriteResource(CurrentCharacter.Portrait), Color.white, AnchorTL, portraitPosition, portraitSize);
         portrait.preserveAspect = true;
-        Art(modal, "Result portrait frame", UiKit.Stroke, UiKit.Alpha(accent, .32f), AnchorTL, new Vector2(26, -182), new Vector2(208, 308));
-        Lt(modal, CurrentCharacter.Name, 26, new Vector2(30, -496), new Vector2(280, 30), UiKit.TextMain, FontStyle.Bold);
-        Lt(modal, CurrentCharacter.CallSign, 12, new Vector2(31, -526), new Vector2(280, 16), accent, FontStyle.Bold);
-        string[] finalStats =
+        Art(modal, "Result portrait frame", UiKit.Stroke, UiKit.Alpha(accent, .32f), AnchorTL, portraitPosition + new Vector2(-4, 4), portraitSize + new Vector2(8, 8));
+        float nameY = portraitPosition.y - portraitSize.y - 10f;
+        float nameHeight = (touchControls ? 40f : 30f) + (paused ? 6f : 0f);
+        Lt(modal, CurrentCharacter.Name, paused ? 30 : 26, new Vector2(30, nameY), new Vector2(280, nameHeight), UiKit.TextMain, FontStyle.Bold);
+        Lt(modal, CurrentCharacter.CallSign, 12, new Vector2(31, nameY - (touchControls ? 34f : 30f) - (paused ? 6f : 0f)), new Vector2(280, 20), accent, FontStyle.Bold);
+        if (!paused)
         {
-            "伤害  ×" + Stats.Damage.ToString("0.00"),
-            "攻速  ×" + Stats.Haste.ToString("0.00"),
-            "暴击  " + Mathf.RoundToInt(Stats.Crit * 100) + "%",
-            "暴伤  " + Mathf.RoundToInt(Stats.CritDamage * 100) + "%",
-            "护甲  " + Mathf.RoundToInt(Mathf.Clamp(Stats.Armor, 0f, .5f) * 100) + "%",
-            "生命  " + (Player != null ? Player.Health : 0) + " / " + Stats.MaxHealth,
-        };
-        for (int i = 0; i < finalStats.Length; i++)
-            Lt(modal, finalStats[i], touchControls ? 14 : 12, new Vector2(30 + (i % 2) * 140, -556 - (i / 2) * (touchControls ? 24 : 21)), new Vector2(138, 20), i % 2 == 0 ? UiKit.TextDim : UiKit.TextMain, FontStyle.Bold);
+            string[] finalStats =
+            {
+                "伤害  ×" + Stats.Damage.ToString("0.00"),
+                "攻速  ×" + Stats.Haste.ToString("0.00"),
+                "暴击  " + Mathf.RoundToInt(Stats.Crit * 100) + "%",
+                "暴伤  " + Mathf.RoundToInt(Stats.CritDamage * 100) + "%",
+                "护甲  " + Mathf.RoundToInt(Mathf.Clamp(Stats.Armor, 0f, .5f) * 100) + "%",
+                "生命  " + (Player != null ? Player.Health : 0) + " / " + Stats.MaxHealth,
+            };
+            for (int i = 0; i < finalStats.Length; i++)
+                Lt(modal, finalStats[i], touchControls ? 14 : 12, new Vector2(30 + (i % 2) * 140, (touchControls ? -562 : -556) - (i / 2) * (touchControls ? 24 : 21)), new Vector2(138, 22), i % 2 == 0 ? UiKit.TextDim : UiKit.TextMain, FontStyle.Bold);
+        }
 
-        var stats = Node(modal, "Run stats", AnchorTL, new Vector2(330, -186), new Vector2(740, 84));
-        StatTile(stats, "Time", "用时", GameRules.TimeLabel(Elapsed), -270, accent, 170);
-        StatTile(stats, "Kills", "击破", Kills.ToString("000"), -90, accent, 170);
-        StatTile(stats, "Level", "等级", Level.ToString("00"), 90, accent, 170);
-        StatTile(stats, "Bosses", "首领", BossesDefeated + " / " + GameRules.BossCount, 270, accent, 170);
+        var stats = Node(modal, "Run stats", AnchorTL, new Vector2(330, touchControls ? -198 : -186), new Vector2(740, 84));
+        if (paused)
+        {
+            PauseStatLine(stats, "用时", GameRules.TimeLabel(Elapsed), -270, accent);
+            PauseStatLine(stats, "击破", Kills.ToString("000"), -90, accent);
+            PauseStatLine(stats, "等级", Level.ToString("00"), 90, accent);
+            PauseStatLine(stats, "首领", BossesDefeated + " / " + GameRules.BossCount, 270, accent);
+        }
+        else
+        {
+            StatTile(stats, "Time", "用时", GameRules.TimeLabel(Elapsed), -270, accent, 170);
+            StatTile(stats, "Kills", "击破", Kills.ToString("000"), -90, accent, 170);
+            StatTile(stats, "Level", "等级", Level.ToString("00"), 90, accent, 170);
+            StatTile(stats, "Bosses", "首领", BossesDefeated + " / " + GameRules.BossCount, 270, accent, 170);
+        }
 
         float totalDamage = 0f, maxDamage = 0f;
         for (int i = 0; i < 5; i++) { totalDamage += Stats.WeaponDamage[i]; maxDamage = Mathf.Max(maxDamage, Stats.WeaponDamage[i]); }
-        Lt(modal, UiKit.Track("本局武器伤害"), 10, new Vector2(330, -282), new Vector2(420, 16), UiKit.TextMute, FontStyle.Bold);
-        Rt(modal, "TOTAL  " + Mathf.RoundToInt(totalDamage).ToString("N0"), 10, new Vector2(-40, -283), new Vector2(300, 16), accent, FontStyle.Bold);
+        Lt(modal, UiKit.Track("本局武器伤害"), 10, new Vector2(330, touchControls ? -294 : -282), new Vector2(420, 18), UiKit.TextMute, FontStyle.Bold);
+        Rt(modal, "TOTAL  " + Mathf.RoundToInt(totalDamage).ToString("N0"), 10, new Vector2(-40, touchControls ? -295 : -283), new Vector2(300, 18), accent, FontStyle.Bold);
 
         for (int i = 0; i < 5; i++)
         {
@@ -166,8 +183,9 @@ public partial class GameBootstrap
             float damage = Stats.WeaponDamage[i];
             float ratio = maxDamage > 0f ? Mathf.Clamp01(damage / maxDamage) : 0f;
             float percent = totalDamage > 0f ? damage / totalDamage * 100f : 0f;
-            var row = Node(modal, "Result weapon", AnchorTL, new Vector2(330, -302 - i * 34), new Vector2(740, 30));
-            Art(row, "Row", UiKit.SoftSmall, new Color(1, 1, 1, .025f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+            var row = Node(modal, "Result weapon", AnchorTL, new Vector2(330, (touchControls ? -314 : -302) - i * 34), new Vector2(740, 30));
+            if (!paused)
+                Art(row, "Row", UiKit.SoftSmall, new Color(1, 1, 1, .025f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
             var icon = Art(row, "Icon", GetSprite("Icons/" + GameRules.IconAsset(i)), unlocked ? Color.white : new Color(1, 1, 1, .15f), AnchorTL, new Vector2(6, -4), new Vector2(22, 22));
             icon.preserveAspect = true;
             Lm(row, WeaponName(i), 14, new Vector2(34, 0), new Vector2(96, 28), unlocked ? UiKit.TextMain : UiKit.TextMute, FontStyle.Bold);
@@ -178,19 +196,20 @@ public partial class GameBootstrap
             Rm(row, totalDamage > 0f ? percent.ToString("0.0") + "%" : string.Empty, 10, new Vector2(-10, 0), new Vector2(80, 28), UiKit.TextMute, FontStyle.Bold);
         }
 
-        int ownedWeapons = 0, evolvedWeapons = 0;
-        for (int i = 0; i < 5; i++) { if (Stats.Weapons[i] > 0) ownedWeapons++; if (Stats.EvolvedWeapons[i]) evolvedWeapons++; }
-        string summary = CurrentCharacter.Name + "  ·  武器 " + ownedWeapons + "/5  ·  进化 " + evolvedWeapons + "/5" +
-            (victory ? "  ·  SECTOR CLEARED" : defeat ? "  ·  下次会走得更远" : string.Empty);
-        // Summary sits under the damage table; actions share the data column (secondary left, primary right).
-        Lt(modal, summary, 13, new Vector2(334, -476), new Vector2(736, 20), UiKit.TextMute, FontStyle.Bold).gameObject.name = "Result summary";
+        if (!paused)
+        {
+            int ownedWeapons = 0, evolvedWeapons = 0;
+            for (int i = 0; i < 5; i++) { if (Stats.Weapons[i] > 0) ownedWeapons++; if (Stats.EvolvedWeapons[i]) evolvedWeapons++; }
+            string summary = CurrentCharacter.Name + "  ·  武器 " + ownedWeapons + "/5  ·  进化 " + evolvedWeapons + "/5" +
+                (victory ? "  ·  SECTOR CLEARED" : defeat ? "  ·  下次会走得更远" : string.Empty);
+            Lt(modal, summary, 13, new Vector2(334, touchControls ? -488 : -476), new Vector2(736, 22), UiKit.TextMute, FontStyle.Bold).gameObject.name = "Result summary";
+        }
 
-        Button primaryAction = State == RunState.Paused
-            ? Cta(modal, "Resume", "继续探索", AnchorTL, new Vector2(590, -510), new Vector2(480, 54), accent, true, Resume, 17)
-            : Cta(modal, "Play again", "再次探索", AnchorTL, new Vector2(590, -510), new Vector2(480, 54), accent, true, PlayAgain, 17);
-        Cta(modal, "Back to title", "返回主菜单", AnchorTL, new Vector2(330, -510), new Vector2(240, 54), new Color(.45f, .57f, .64f), false, RestartRun, 15);
+        Button primaryAction = paused
+            ? Cta(modal, "Resume", "继续探索", AnchorTL, new Vector2(590, touchControls ? -522 : -510), new Vector2(480, 54), accent, true, Resume, 17)
+            : Cta(modal, "Play again", "再次探索", AnchorTL, new Vector2(590, touchControls ? -522 : -510), new Vector2(480, 54), accent, true, PlayAgain, 17);
+        Cta(modal, "Back to title", "返回主菜单", AnchorTL, new Vector2(330, touchControls ? -522 : -510), new Vector2(240, 54), new Color(.45f, .57f, .64f), false, RestartRun, 15);
         primaryAction.transform.SetAsLastSibling();
-        if (State != RunState.Paused) AddUtilityButtons(screenRoot);
     }
 
     private void StatTile(Transform parent, string name, string label, string value, float x, Color accent, float width = 168)
@@ -201,6 +220,14 @@ public partial class GameBootstrap
         Art(tile, "Mark", UiKit.Diamond, UiKit.Alpha(accent, .9f), AnchorTC, new Vector2(0, -10), new Vector2(6, 6));
         Ct(tile, label, 12, new Vector2(0, -19), new Vector2(width - 16, 18), UiKit.TextDim, FontStyle.Bold);
         Ct(tile, value, 30, new Vector2(0, -40), new Vector2(width - 16, 38), UiKit.TextMain, FontStyle.Bold, displayFont);
+    }
+
+    private void PauseStatLine(Transform parent, string label, string value, float x, Color accent)
+    {
+        var line = Node(parent, "Pause stat", AnchorTC, new Vector2(x, 0), new Vector2(170, 84));
+        Art(line, "Rule", UiKit.Solid, UiKit.Alpha(accent, .3f), AnchorTC, new Vector2(0, -2), new Vector2(96, 1));
+        Ct(line, label, 11, new Vector2(0, -14), new Vector2(160, 18), UiKit.TextDim, FontStyle.Bold);
+        Ct(line, value, 28, new Vector2(0, -38), new Vector2(170, 34), UiKit.TextMain, FontStyle.Bold, displayFont);
     }
 
     // ------------------------------------------------------- pilot sheet
@@ -225,41 +252,30 @@ public partial class GameBootstrap
         Color accent = CurrentCharacter.Accent;
         var card = Frame(sheetRoot, "Pilot sheet frame", AnchorCC, Vector2.zero, new Vector2(1000, 620), accent, .97f);
         Lt(card, UiKit.Track("作战状态"), 10, new Vector2(30, -22), new Vector2(420, 16), UiKit.Alpha(accent, .95f), FontStyle.Bold);
-        if (touchControls)
-        {
-            var close = Node(card, "Close pilot sheet", AnchorTR, new Vector2(-22f, -18f), new Vector2(36f, 36f));
-            var closeBody = Art(close, "Fill", UiKit.SoftSmall, new Color(1f, 1f, 1f, .045f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-            closeBody.raycastTarget = true;
-            Fill(close, "Edge", UiKit.SoftSmallEdge, UiKit.Alpha(accent, .4f));
-            var closeButton = close.gameObject.AddComponent<Button>();
-            closeButton.targetGraphic = closeBody; closeButton.transition = Selectable.Transition.None;
-            closeButton.onClick.AddListener(ClosePilotSheet);
-            var x1 = Art(close, "X 1", UiKit.Solid, UiKit.TextMain, AnchorCC, Vector2.zero, new Vector2(2f, 16f));
-            var x2 = Art(close, "X 2", UiKit.Solid, UiKit.TextMain, AnchorCC, Vector2.zero, new Vector2(2f, 16f));
-            x1.rectTransform.localRotation = Quaternion.Euler(0, 0, 45f);
-            x2.rectTransform.localRotation = Quaternion.Euler(0, 0, -45f);
-        }
-        else Rt(card, "C / ESC  关闭", 9, new Vector2(-30, -24), new Vector2(200, 14), UiKit.TextMute, FontStyle.Bold);
+        var close = Node(card, "Close pilot sheet", AnchorTR, new Vector2(-24f, -20f), new Vector2(42f, 42f));
+        var closeBody = Art(close, "Hit area", UiKit.Solid, new Color(1f, 1f, 1f, .001f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        closeBody.raycastTarget = true;
+        var closeButton = close.gameObject.AddComponent<Button>();
+        closeButton.targetGraphic = closeBody; closeButton.transition = Selectable.Transition.None;
+        closeButton.onClick.AddListener(ClosePilotSheet);
+        var x1 = Art(close, "X 1", UiKit.Solid, UiKit.TextMain, AnchorCC, Vector2.zero, new Vector2(2f, 20f));
+        var x2 = Art(close, "X 2", UiKit.Solid, UiKit.TextMain, AnchorCC, Vector2.zero, new Vector2(2f, 20f));
+        x1.rectTransform.localRotation = Quaternion.Euler(0, 0, 45f);
+        x2.rectTransform.localRotation = Quaternion.Euler(0, 0, -45f);
 
         var portrait = Art(card, "Sheet portrait", SpriteResource(CurrentCharacter.Portrait), Color.white, AnchorTL, new Vector2(36, -64), new Vector2(280, 420));
         portrait.preserveAspect = true;
         Art(card, "Sheet portrait frame", UiKit.Stroke, UiKit.Alpha(accent, .35f), AnchorTL, new Vector2(32, -60), new Vector2(288, 428));
-        Art(card, "Portrait bottom scrim", UiKit.GradientDown, new Color(.012f, .02f, .032f, .9f), AnchorTL, new Vector2(36, -400), new Vector2(280, 84));
         float hpRatio = Player != null ? Mathf.Clamp01(Player.Health / (float)Stats.MaxHealth) : 0f;
-        Art(card, "HP track", UiKit.Solid, new Color(0, 0, 0, .55f), AnchorTL, new Vector2(44, -462), new Vector2(264, 9));
-        Art(card, "HP fill", UiKit.Solid, UiKit.Alpha(accent, .92f), AnchorTL, new Vector2(44, -462), new Vector2(264f * hpRatio, 9));
-        Lt(card, "HP  " + (Player != null ? Player.Health : 0) + " / " + Stats.MaxHealth, 9, new Vector2(44, -448), new Vector2(264, 14), UiKit.TextDim, FontStyle.Bold);
-        var levelChip = Node(card, "Sheet level", AnchorTL, new Vector2(238, -76), new Vector2(68, 22));
-        Art(levelChip, "Fill", UiKit.SoftSmall, new Color(.015f, .025f, .04f, .92f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Fill(levelChip, "Edge", UiKit.SoftSmallEdge, UiKit.Alpha(accent, .45f));
-        Mc(levelChip, "LV " + Level, 9, UiKit.TextMain, FontStyle.Bold);
-        Lt(card, CurrentCharacter.Name, 28, new Vector2(36, -494), new Vector2(320, 36), UiKit.TextMain, FontStyle.Bold);
-        Lt(card, CurrentCharacter.CallSign, 11, new Vector2(37, -532), new Vector2(320, 16), accent, FontStyle.Bold);
-        Lt(card, "时间 " + GameRules.TimeLabel(Elapsed) + "      等级 " + Level + "      击杀 " + Kills, 11, new Vector2(36, -560), new Vector2(320, 16), UiKit.TextDim, FontStyle.Bold);
-        Lt(card, "被动  " + PassiveTitle(CurrentCharacter.Id), 10, new Vector2(36, -582), new Vector2(320, 14), UiKit.TextMute);
+        Art(card, "HP track", UiKit.Solid, new Color(0, 0, 0, .55f), AnchorTL, new Vector2(44, -492), new Vector2(264, 5));
+        Art(card, "HP fill", UiKit.Solid, UiKit.Alpha(accent, .92f), AnchorTL, new Vector2(44, -492), new Vector2(264f * hpRatio, 5));
+        Lt(card, "HP  " + (Player != null ? Player.Health : 0) + " / " + Stats.MaxHealth, 9, new Vector2(44, -502), new Vector2(264, 14), UiKit.TextDim, FontStyle.Bold);
+        Lt(card, "LV " + Level, 10, new Vector2(238, -76), new Vector2(68, 20), accent, FontStyle.Bold);
+        Lt(card, CurrentCharacter.Name, 26, new Vector2(36, -532), new Vector2(300, 32), UiKit.TextMain, FontStyle.Bold);
+        Lt(card, CurrentCharacter.CallSign, 11, new Vector2(37, -568), new Vector2(300, 16), accent, FontStyle.Bold);
+        Lt(card, "时间 " + GameRules.TimeLabel(Elapsed) + "      等级 " + Level + "      击杀 " + Kills, 11, new Vector2(36, -594), new Vector2(300, 16), UiKit.TextDim, FontStyle.Bold);
 
         Art(card, "Sheet divider", UiKit.Solid, new Color(1, 1, 1, .06f), AnchorTL, new Vector2(338, -70), new Vector2(1, 470));
-        Art(card, "Sheet content panel", UiKit.Soft, new Color(1, 1, 1, .018f), AnchorTL, new Vector2(350, -62), new Vector2(620, 500));
         var viewport = Node(card, "Sheet viewport", AnchorTL, new Vector2(356, -62), new Vector2(612, 500));
         var viewportBg = viewport.gameObject.AddComponent<Image>();
         viewportBg.color = new Color(0, 0, 0, 0); viewportBg.raycastTarget = true;
@@ -280,7 +296,7 @@ public partial class GameBootstrap
             new KeyValuePair<string, string>("暴击伤害", Mathf.RoundToInt(Stats.CritDamage * 100) + "%"),
             new KeyValuePair<string, string>("护甲", Mathf.RoundToInt(Mathf.Clamp(Stats.Armor, 0f, .5f) * 100) + "%"),
             new KeyValuePair<string, string>("每秒回复", Stats.Regeneration.ToString("0.0")),
-            new KeyValuePair<string, string>("拾取范围", Stats.Magnet.ToString("0.0") + "m"),
+            new KeyValuePair<string, string>("拾取范围", Stats.Magnet.ToString("0.0") + " 米"),
             new KeyValuePair<string, string>("穿透", Stats.Pierce.ToString()),
             new KeyValuePair<string, string>("生命", Player.Health + " / " + Stats.MaxHealth),
         };
@@ -288,8 +304,7 @@ public partial class GameBootstrap
         {
             float x = (i % 5) * 122f, y = -(i / 5) * 72f;
             var tile = Node(content, "Sheet stat", AnchorTL, new Vector2(x, y), new Vector2(114, 64));
-            Art(tile, "Fill", UiKit.Soft, new Color(1, 1, 1, .04f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-            Fill(tile, "Edge", UiKit.SoftEdge, UiKit.Alpha(accent, .16f));
+            Art(tile, "Rule", UiKit.Solid, UiKit.Alpha(accent, .28f), AnchorTC, new Vector2(0, -2), new Vector2(76, 1));
             Ct(tile, stats[i].Key, 9, new Vector2(0, -10), new Vector2(108, 14), UiKit.TextMute, FontStyle.Bold);
             Ct(tile, stats[i].Value, 18, new Vector2(0, -30), new Vector2(108, 26), UiKit.TextMain, FontStyle.Bold, displayFont);
         }
@@ -301,7 +316,7 @@ public partial class GameBootstrap
         {
             int level = Stats.Weapons[i]; bool unlocked = level > 0; bool evolved = Stats.EvolvedWeapons[i];
             var row = Node(content, "Sheet weapon", AnchorTL, new Vector2(0, -172 - i * 34), new Vector2(612, 30));
-            Art(row, "Fill", UiKit.SoftSmall, new Color(1, 1, 1, i % 2 == 0 ? .035f : .02f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+            Art(row, "Rule", UiKit.Solid, new Color(1, 1, 1, .055f), new Vector2(0, 0), new Vector2(1, 0), new Vector2(.5f, 0), Vector2.zero, new Vector2(0, 1));
             var icon = Art(row, "Icon", GetSprite("Icons/" + GameRules.IconAsset(i)), unlocked ? (evolved ? Color.Lerp(Color.white, GameRules.Gold, .25f) : Color.white) : new Color(1, 1, 1, .18f), AnchorTL, new Vector2(6, -4), new Vector2(22, 22));
             icon.preserveAspect = true;
             Lm(row, unlocked ? WeaponName(i) : "—  未解锁", 12, new Vector2(36, 0), new Vector2(110, 26), unlocked ? (evolved ? GameRules.Gold : UiKit.TextMain) : UiKit.TextMute, FontStyle.Bold);
@@ -388,9 +403,9 @@ public partial class GameBootstrap
             fitter.aspectRatio = backdrop.rect.width / backdrop.rect.height;
         }
         Art(panel, "Wash", UiKit.Solid, new Color(.012f, .024f, .038f, .96f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        var grid = Art(panel, "Grid", UiKit.Grid, UiKit.Alpha(GameRules.Cyan, .03f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero); grid.type = Image.Type.Tiled;
-        Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .75f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(panel, "Scanlines", UiKit.Scanlines, new Color(0, 0, 0, .4f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        var grid = Art(panel, "Grid", UiKit.Grid, UiKit.Alpha(GameRules.Cyan, .016f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero); grid.type = Image.Type.Tiled;
+        Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .44f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        Art(panel, "Scanlines", UiKit.Scanlines, new Color(0, 0, 0, .08f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
 
         var archive = Node(panel, "Phone archive layout", AnchorCC, new Vector2(0f, touchControls ? 0f : 26f), new Vector2(1440, touchControls ? 810f / MobilePageScale : 810f));
         if (touchControls) archive.localScale = Vector3.one * MobilePageScale;
@@ -398,28 +413,28 @@ public partial class GameBootstrap
 
         Art(panel, "Header halo", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .10f), AnchorTL, new Vector2(240, -40), new Vector2(640, 240));
         Art(panel, "Head mark", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .95f), AnchorTL, new Vector2(58, -38), new Vector2(7, 7));
-        Lt(panel, UiKit.Track("PILOT ARCHIVE  /  ASHEN GATE EXPEDITION"), 11, new Vector2(74, -34), new Vector2(560, 18), UiKit.Alpha(GameRules.Cyan, .95f), FontStyle.Bold);
+        Lt(panel, UiKit.Track("PILOT ARCHIVE"), 11, new Vector2(74, -34), new Vector2(560, 18), UiKit.Alpha(GameRules.Cyan, .95f), FontStyle.Bold);
         Art(panel, "Title accent", UiKit.Solid, GameRules.Cyan, AnchorTL, new Vector2(48, -54), new Vector2(3, 44));
-        Lt(panel, "选择你的共鸣者", 42, new Vector2(60, -50), new Vector2(620, 56), UiKit.TextMain, FontStyle.Bold);
-        Lt(panel, "五名驾驶员 · 五种本命武器 · 一套专属被动", 14, new Vector2(60, -104), new Vector2(620, 24), UiKit.TextDim);
+        Lt(panel, "选择你的共鸣者", 42, new Vector2(60, -50), new Vector2(touchControls ? 780 : 620, touchControls ? 72 : 56), UiKit.TextMain, FontStyle.Bold);
+        float headerShift = touchControls ? 22f : 0f;
         characterFeatureIndex = Rt(panel, "01 / 05", 30, new Vector2(-66, -40), new Vector2(150, 38), GameRules.Cyan, FontStyle.Bold, displayFont);
         Rt(panel, UiKit.Track("ACTIVE FILE"), 10, new Vector2(-66, -76), new Vector2(140, 16), UiKit.TextMute, FontStyle.Bold);
-        HLine(panel, "Header divider", 56f, -136f, 1f, new Color(1, 1, 1, .08f));
+        HLine(panel, "Header divider", 56f, -136f - headerShift, 1f, new Color(1, 1, 1, .08f));
 
-        var feature = Frame(panel, "Featured pilot", AnchorTL, new Vector2(48, -148), new Vector2(452, 590), CurrentCharacter.Accent, .92f);
-        characterFeatureEdge = feature.Find("Edge").GetComponent<Image>();
-        characterFeatureGlow = Art(feature, "Portrait glow", UiKit.Glow, UiKit.Alpha(CurrentCharacter.Accent, .3f), AnchorTC, new Vector2(0, -20), new Vector2(410, 500));
-        Art(feature, "Portrait frame", UiKit.Stroke, UiKit.Alpha(CurrentCharacter.Accent, .35f), AnchorTC, new Vector2(0, -14), new Vector2(288, 428));
-        characterFeaturePortrait = Art(feature, "Featured portrait", null, Color.white, AnchorTC, new Vector2(0, -18), new Vector2(280, 420));
+        var feature = Node(panel, "Featured pilot", AnchorTL, new Vector2(48, -148 - headerShift), new Vector2(452, 590));
+        // The portrait is the visual anchor. Keep one editorial rule and a soft wash instead of a card frame.
+        characterFeatureEdge = Art(feature, "Edge", UiKit.Solid, UiKit.Alpha(CurrentCharacter.Accent, .58f), Vector2.zero, new Vector2(0, 1), new Vector2(0, .5f), Vector2.zero, new Vector2(3, -128));
+        characterFeatureGlow = Art(feature, "Portrait glow", UiKit.Glow, UiKit.Alpha(CurrentCharacter.Accent, .08f), AnchorTC, new Vector2(0, -16), new Vector2(430, 470));
+        characterFeaturePortrait = Art(feature, "Featured portrait", null, Color.white, AnchorTC, new Vector2(0, -16), new Vector2(320, 420));
         characterFeaturePortrait.preserveAspect = true;
-        Art(feature, "Portrait scrim", UiKit.GradientDown, new Color(.012f, .02f, .032f, .92f), AnchorTC, new Vector2(0, -352), new Vector2(280, 86));
+        Art(feature, "Portrait scrim", UiKit.GradientDown, new Color(.012f, .02f, .032f, .86f), AnchorTC, new Vector2(0, -352), new Vector2(320, 86));
 
-        characterFeatureName = Lt(feature, "", 34, new Vector2(26, -442), new Vector2(400, 40), UiKit.TextMain, FontStyle.Bold);
-        characterFeatureCallSign = Lt(feature, "", 13, new Vector2(27, -486), new Vector2(400, 20), GameRules.Cyan, FontStyle.Bold);
-        HLine(feature, "Divider", 26f, -508f, 1f, new Color(1, 1, 1, .07f));
+        characterFeatureName = Lt(feature, "", 34, new Vector2(26, -442), new Vector2(400, 50), UiKit.TextMain, FontStyle.Bold);
+        characterFeatureCallSign = Lt(feature, "", 13, new Vector2(27, -494), new Vector2(400, 20), GameRules.Cyan, FontStyle.Bold);
+        HLine(feature, "Divider", 26f, -514f, 1f, new Color(1, 1, 1, .07f));
         for (int s = 0; s < 3; s++)
         {
-            float y = -520f - s * 24f;
+            float y = -522f - s * 22f;
             var row = Node(feature, "Stat row", AnchorTL, new Vector2(26, y), new Vector2(400, 20));
             Lt(row, new[] { "生存", "机动", "输出" }[s], touchControls ? 13 : 11, new Vector2(0, touchControls ? 2 : 3), new Vector2(58, 20), UiKit.TextDim);
             for (int p = 0; p < 5; p++)
@@ -427,15 +442,15 @@ public partial class GameBootstrap
             characterStatValues[s] = Rm(row, "2 / 5", 10, new Vector2(-4, 0), new Vector2(50, 20), UiKit.TextMute, FontStyle.Bold);
         }
 
-        var dossier = Frame(panel, "Pilot dossier", AnchorTL, new Vector2(516, -148), new Vector2(876, 292), new Color(.4f, .66f, .7f), .9f);
+        var dossier = Node(panel, "Pilot dossier", AnchorTL, new Vector2(516, -148 - headerShift), new Vector2(876, 304));
+        Art(dossier, "Dossier rule", UiKit.Solid, new Color(1, 1, 1, .16f), Vector2.zero, new Vector2(0, 1), new Vector2(0, .5f), Vector2.zero, new Vector2(3, -4));
         // Phone body copy is set one step larger so the dossier stays readable at arm's length.
         int bodySize = touchControls ? 16 : 13, detailSize = touchControls ? 15 : 12;
         characterFeatureQuote = Lt(dossier, "", touchControls ? 24 : 21, new Vector2(28, -20), new Vector2(800, 32), GameRules.Cyan);
         characterFeatureStory = Lt(dossier, "", bodySize, new Vector2(28, -58), new Vector2(810, 54), UiKit.TextDim);
         HLine(dossier, "Divider", 26f, -118f, 1f, new Color(1, 1, 1, .07f));
-        var weaponBox = Node(dossier, "Weapon dossier", AnchorTL, new Vector2(24, -132), new Vector2(402, 138));
-        Art(weaponBox, "Fill", UiKit.Soft, new Color(1, 1, 1, .035f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Fill(weaponBox, "Edge", UiKit.SoftEdge, new Color(1, 1, 1, .07f));
+        var weaponBox = Node(dossier, "Weapon dossier", AnchorTL, new Vector2(24, -104), new Vector2(402, touchControls ? 172 : 160));
+        Art(weaponBox, "Rule", UiKit.Solid, new Color(1, 1, 1, .10f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -2), new Vector2(0, 1));
         var weaponChip = Node(weaponBox, "Weapon icon frame", AnchorTL, new Vector2(12, -12), new Vector2(42, 42));
         Art(weaponChip, "Fill", UiKit.SoftSmall, new Color(.02f, .05f, .07f, .95f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         Fill(weaponChip, "Edge", UiKit.SoftSmallEdge, new Color(1, 1, 1, .12f));
@@ -443,40 +458,38 @@ public partial class GameBootstrap
         characterFeatureWeaponIcon.preserveAspect = true;
         Lt(weaponBox, UiKit.Track("本命武器"), 9, new Vector2(64, -11), new Vector2(320, 16), UiKit.TextMute, FontStyle.Bold);
         characterFeatureWeapon = Lt(weaponBox, "", 17, new Vector2(64, -26), new Vector2(320, 24), UiKit.TextMain, FontStyle.Bold);
-        characterFeatureWeaponDesc = Lt(weaponBox, "", detailSize, new Vector2(14, -64), new Vector2(376, 64), UiKit.TextDim);
+        characterFeatureWeaponDesc = Lt(weaponBox, "", detailSize, new Vector2(14, -54), new Vector2(376, touchControls ? 108 : 88), UiKit.TextDim);
 
-        var passiveBox = Node(dossier, "Passive dossier", AnchorTL, new Vector2(444, -132), new Vector2(402, 138));
-        Art(passiveBox, "Fill", UiKit.Soft, new Color(1, 1, 1, .035f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Fill(passiveBox, "Edge", UiKit.SoftEdge, new Color(1, 1, 1, .07f));
+        var passiveBox = Node(dossier, "Passive dossier", AnchorTL, new Vector2(444, -104), new Vector2(402, touchControls ? 172 : 160));
+        Art(passiveBox, "Rule", UiKit.Solid, new Color(1, 1, 1, .10f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -2), new Vector2(0, 1));
         var passiveChip = Node(passiveBox, "Passive icon frame", AnchorTL, new Vector2(12, -12), new Vector2(42, 42));
         Art(passiveChip, "Fill", UiKit.SoftSmall, new Color(.02f, .05f, .07f, .95f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         Fill(passiveChip, "Edge", UiKit.SoftSmallEdge, new Color(1, 1, 1, .12f));
         Art(passiveChip, "Passive glyph", UiKit.Diamond, Color.white, new Vector2(.5f, .5f), new Vector2(.5f, .5f), AnchorCC, Vector2.zero, new Vector2(18, 18));
         Lt(passiveBox, UiKit.Track("专属被动"), 9, new Vector2(64, -11), new Vector2(320, 16), UiKit.TextMute, FontStyle.Bold);
         characterFeaturePassive = Lt(passiveBox, "", 17, new Vector2(64, -26), new Vector2(320, 24), UiKit.TextMain, FontStyle.Bold);
-        characterFeaturePassiveDesc = Lt(passiveBox, "", detailSize, new Vector2(14, -64), new Vector2(376, 64), UiKit.TextDim);
+        characterFeaturePassiveDesc = Lt(passiveBox, "", detailSize, new Vector2(14, -54), new Vector2(376, touchControls ? 108 : 88), UiKit.TextDim);
 
         for (int i = 0; i < CharacterRoster.All.Length; i++)
         {
             int index = i; CharacterProfile profile = CharacterRoster.All[i];
-            var card = Node(panel, "Character card", AnchorBL, AnchorBL, AnchorCC, new Vector2(596 + i * 179f, 196f), new Vector2(160, 266));
+            var card = Node(panel, "Character card", AnchorBL, AnchorBL, AnchorCC, new Vector2(596 + i * 179f, touchControls ? 70f : 196f), new Vector2(160, 266));
             var button = card.gameObject.AddComponent<Button>();
-            var body = card.gameObject.AddComponent<Image>(); body.sprite = UiKit.Soft; body.type = Image.Type.Sliced;
-            body.color = new Color(1, 1, 1, .03f); body.raycastTarget = true;
+            var body = card.gameObject.AddComponent<Image>(); body.sprite = UiKit.Solid;
+            body.color = new Color(1, 1, 1, .002f); body.raycastTarget = true;
             button.targetGraphic = body; button.transition = Selectable.Transition.None; button.onClick.AddListener(() => SelectCharacter(index));
             characterButtons[i] = button; characterCardBodies[i] = body;
-            var glow = Fill(card, "Glow", UiKit.Glow, UiKit.Alpha(profile.Accent, 0f), Vector2.zero, new Vector2(12, 12)); characterCardGlows[i] = glow;
-            var edge = Fill(card, "Edge", UiKit.SoftEdge, new Color(1, 1, 1, .07f)); characterCardEdges[i] = edge;
+            var glow = Fill(card, "Glow", UiKit.Glow, UiKit.Alpha(profile.Accent, 0f), Vector2.zero, new Vector2(8, 8)); characterCardGlows[i] = glow;
+            var edge = Art(card, "Edge", UiKit.Solid, new Color(1, 1, 1, .045f), new Vector2(0, 0), new Vector2(1, 0), new Vector2(.5f, 0), Vector2.zero, new Vector2(-20, 1)); characterCardEdges[i] = edge;
             var bar = Art(card, "Accent bar", UiKit.Solid, new Color(1, 1, 1, .12f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, 0), new Vector2(-20, 2)); characterCardBars[i] = bar;
             var portrait = Art(card, "Pilot portrait", SpriteResource(profile.Portrait), Color.white, new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -5), new Vector2(-14, 214));
             portrait.preserveAspect = true;
-            Art(card, "Portrait scrim", UiKit.GradientDown, new Color(.012f, .02f, .032f, .8f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -179), new Vector2(-14, 40));
+            Art(card, "Portrait scrim", UiKit.GradientDown, new Color(.012f, .02f, .032f, .62f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -179), new Vector2(-14, 40));
             var chip = Node(card, "Index chip", AnchorTL, new Vector2(8, -8), new Vector2(26, 18));
-            Art(chip, "Fill", UiKit.SoftSmall, new Color(.012f, .02f, .032f, .88f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-            Fill(chip, "Edge", UiKit.SoftSmallEdge, new Color(1, 1, 1, .1f));
+            Art(chip, "Rule", UiKit.Solid, new Color(1, 1, 1, .18f), new Vector2(0, 0), new Vector2(1, 0), new Vector2(.5f, 0), Vector2.zero, new Vector2(0, 1));
             characterCardIndices[i] = Mc(chip, (i + 1).ToString("00"), 9, UiKit.TextDim, FontStyle.Bold);
-            Lt(card, profile.Name, touchControls ? 18 : 15, new Vector2(9, touchControls ? -218 : -222), new Vector2(142, 24), UiKit.TextMain, FontStyle.Bold);
-            Lt(card, profile.Weapon, touchControls ? 14 : 11, new Vector2(9, -244), new Vector2(142, 20), profile.Accent, FontStyle.Bold);
+            Lt(card, profile.Name, touchControls ? 18 : 15, new Vector2(9, touchControls ? -208 : -222), new Vector2(142, 28), UiKit.TextMain, FontStyle.Bold);
+            Lt(card, profile.Weapon, touchControls ? 14 : 11, new Vector2(9, -248), new Vector2(142, 22), profile.Accent, FontStyle.Bold);
             var hover = card.gameObject.AddComponent<UiHover>();
             hover.body = card; hover.edge = edge; hover.edgeIdle = edge.color; hover.edgeHot = profile.Accent; hover.hoverScale = 1.03f;
         }
@@ -487,9 +500,13 @@ public partial class GameBootstrap
         UpdateCharacterSelection();
     }
 
-    private void AddUtilityButtons(Transform parent)
+    private void AddSettingsButton(Transform parent)
     {
-        Cta(parent, "Settings", "设置", AnchorBR, new Vector2(-22, touchControls ? 32 : 22), touchControls ? new Vector2(220, 68) : new Vector2(188, 46), GameRules.Cyan, false, OpenSettings, touchControls ? 17 : 14);
+        float size = touchControls ? 68f : 48f;
+        var button = Cta(parent, "Settings", null, AnchorTR, new Vector2(-28, touchControls ? -28 : -24),
+            Vector2.one * size, GameRules.Cyan, false, OpenSettings);
+        Art(button.transform, "Settings gear", GetSprite("Icons/settings-gear"), UiKit.TextMain,
+            AnchorCC, Vector2.zero, Vector2.one * (touchControls ? 30f : 24f));
     }
 
     // -------------------------------------------------------------- upgrades

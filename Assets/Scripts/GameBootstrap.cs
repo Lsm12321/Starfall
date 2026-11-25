@@ -79,7 +79,7 @@ public partial class GameBootstrap : MonoBehaviour
     private Canvas canvas;
     private RectTransform overlay;
     private GameObject hudRoot, statePanel, upgradePanel, bossPanel, sheetPanel;
-    private Text clockText, levelText, killText, healthText, waveText, waveLabelText, stageSectorText, stageIndexText, hintText, bossText, bossHeader, upgradeTitle, upgradeSubtitle, upgradeKicker, upgradeSummary, pilotText, xpText, dashText;
+    private Text clockText, levelText, killText, healthText, stageNameText, stageSectorText, stageIndexText, hintText, bossText, bossHeader, upgradeTitle, upgradeSubtitle, upgradeKicker, upgradeSummary, pilotText, xpText, dashText;
     private Image hpFill, hpGhost, hpGlow, healthEdge, xpFill, xpGlow, waveFill, bossFill, bossGlow, dashFill, rewardBossArt, bossPortrait, bossFrameEdge, stageEdge;
     private readonly Image[] stagePips = new Image[3];
     private RectTransform upgradeKickerRect, upgradeTitleRect, upgradeSummaryRect, rewardSealRect;
@@ -102,8 +102,8 @@ public partial class GameBootstrap : MonoBehaviour
     internal static float ScreenShakeScale = .4f;
     private float cameraShakeTimer, cameraShakeStrength;
     private Vector3 cameraBasePosition;
-    private Vector3 lastCameraPlayerPosition;
-    private Vector2 cameraPlayerVelocity;
+    private Vector2 lastCameraPlayerPosition;
+    private Vector2 cameraMovementLead;
     private bool cameraReady;
     private float bossHitStopTimer;
     private float bossRewardTimer;
@@ -239,6 +239,7 @@ public partial class GameBootstrap : MonoBehaviour
                 bool lateStageTwo = ArenaStage == 2 && Elapsed - stageStartedAt > 55f;
                 if (lateStageTwo && Random.value < .28f) SpawnEnemy();
                 float extraChance = Mathf.Lerp(.08f, .34f, Mathf.Clamp01(Elapsed / 240f)) + BossesDefeated * .06f;
+                extraChance *= GameRules.StageOneMidgameMinionScale(ArenaStage, Elapsed);
                 if (Random.value < extraChance)
                 {
                     SpawnEnemy();
@@ -252,7 +253,8 @@ public partial class GameBootstrap : MonoBehaviour
             {
                 // Wave density still ramps up, but the stage banner only appears when the stage actually changes.
                 lastWave = Wave;
-                for (int i = 0; i < 3 + Wave; i++) SpawnEnemy();
+                int waveCount = Mathf.Max(1, Mathf.RoundToInt((3 + Wave) * GameRules.StageOneMidgameMinionScale(ArenaStage, Elapsed)));
+                for (int i = 0; i < waveCount; i++) SpawnEnemy();
             }
             if (!bossStarted && Elapsed >= GameRules.BossTime - 2.5f && warnedBossStage < 1) ShowBossWarning(1);
             if (!bossStarted && Elapsed >= GameRules.BossTime) SpawnBoss();
@@ -293,65 +295,60 @@ public partial class GameBootstrap : MonoBehaviour
     private void LateUpdate()
     {
         UpdateMobileViewport();
-        if (worldCamera == null || Player == null || State != RunState.Playing) return;
+        if (worldCamera == null || Player == null) return;
+
+        Vector2 playerPosition = Player.transform.position;
+        Vector2 displacement = playerPosition - lastCameraPlayerPosition;
+        lastCameraPlayerPosition = playerPosition;
+        float moveDt = Time.deltaTime;
+        if (State != RunState.Playing || moveDt <= 0f) return;
 
         float dt = Mathf.Min(.05f, Time.unscaledDeltaTime);
         float halfHeight = worldCamera.orthographicSize;
         float halfWidth = halfHeight * worldCamera.aspect;
 
-        Vector3 playerPosition = Player.transform.position;
         if (!cameraReady)
         {
             cameraReady = true;
-            cameraPlayerVelocity = Vector2.zero;
-            cameraBasePosition = ClampCameraPosition(PlayerCameraFocus(playerPosition), halfWidth, halfHeight);
-            lastCameraPlayerPosition = playerPosition;
+            cameraBasePosition = ClampCameraPosition(new Vector3(playerPosition.x, playerPosition.y, -20f), halfWidth, halfHeight);
             ApplyCameraPosition(dt);
             return;
         }
 
-        float moveDt = Mathf.Max(.0001f, Time.deltaTime);
-        Vector2 instantVelocity = ((Vector2)playerPosition - (Vector2)lastCameraPlayerPosition) / moveDt;
-        cameraPlayerVelocity = Vector2.Lerp(cameraPlayerVelocity, instantVelocity, 1f - Mathf.Exp(-12f * dt));
-        lastCameraPlayerPosition = playerPosition;
+        Vector2 instantVelocity = displacement / moveDt;
+        Vector2 targetLead = Vector2.ClampMagnitude(instantVelocity * (TouchControls ? .34f : .52f), TouchControls ? .42f : .68f);
+        // Smooth the bounded lead so releasing movement does not pull the camera back abruptly.
+        float leadSharpness = displacement == Vector2.zero ? 3.5f : 22f;
+        cameraMovementLead = Vector2.Lerp(cameraMovementLead, targetLead, 1f - Mathf.Exp(-leadSharpness * dt));
 
-        Vector3 focus = PlayerCameraFocus(playerPosition);
-        Vector3 desired = cameraBasePosition;
+        Vector2 edgeDamping = CameraEdgeDamping(playerPosition, halfWidth, halfHeight);
+        Vector2 movementLead = Vector2.Scale(cameraMovementLead, edgeDamping);
+        Vector2 focus = playerPosition + movementLead;
         if (Boss != null)
         {
             // Keep the player and the boss in the same composition without
             // letting a distant boss pull the player completely off-screen.
             Vector2 bossPosition = Boss.transform.position;
-            Vector2 towardBoss = bossPosition - (Vector2)playerPosition;
+            Vector2 towardBoss = bossPosition - playerPosition;
             if (towardBoss.magnitude > 6.5f)
-                bossPosition = (Vector2)playerPosition + towardBoss.normalized * 6.5f;
-            focus = Vector2.Lerp(playerPosition, bossPosition, TouchControls ? .60f : .65f);
-            desired = new Vector3(focus.x, focus.y, -20f);
-        }
-        else
-        {
-            float deadX = halfWidth * (TouchControls ? .18f : .14f);
-            float deadY = halfHeight * (TouchControls ? .12f : .10f);
-            float dx = focus.x - cameraBasePosition.x;
-            float dy = focus.y - cameraBasePosition.y;
-            if (Mathf.Abs(dx) > deadX)
-                desired.x += dx - Mathf.Sign(dx) * deadX;
-            if (Mathf.Abs(dy) > deadY)
-                desired.y += dy - Mathf.Sign(dy) * deadY;
+                bossPosition = playerPosition + towardBoss.normalized * 6.5f;
+            Vector2 bossFocus = Vector2.Lerp(playerPosition, bossPosition, TouchControls ? .60f : .65f);
+            focus = bossFocus + movementLead * .45f;
         }
 
-        desired = ClampCameraPosition(desired, halfWidth, halfHeight);
-        float sharpness = Boss != null ? 5.5f : TouchControls ? 10f : 8.5f;
+        Vector3 desired = ClampCameraPosition(new Vector3(focus.x, focus.y, -20f), halfWidth, halfHeight);
+        float sharpness = Boss != null ? 5.5f : TouchControls ? 8.5f : 7.5f;
         cameraBasePosition = Vector3.Lerp(cameraBasePosition, desired, 1f - Mathf.Exp(-sharpness * dt));
         ApplyCameraPosition(dt);
     }
 
-    private Vector3 PlayerCameraFocus(Vector3 playerPosition)
+    private Vector2 CameraEdgeDamping(Vector2 playerPosition, float halfWidth, float halfHeight)
     {
-        Vector2 lead = cameraPlayerVelocity * (TouchControls ? .30f : .45f);
-        lead = Vector2.ClampMagnitude(lead, TouchControls ? .35f : .55f);
-        Vector2 focus = (Vector2)playerPosition + lead;
-        return new Vector3(focus.x, focus.y, -20f);
+        float horizontalRoom = Mathf.Max(1.2f, halfWidth * .45f);
+        float verticalRoom = Mathf.Max(1.2f, halfHeight * .45f);
+        float xRoom = Mathf.Max(0f, GameRules.HalfWidth - Mathf.Abs(playerPosition.x));
+        float yRoom = Mathf.Max(0f, GameRules.HalfHeight - Mathf.Abs(playerPosition.y));
+        return new Vector2(Mathf.Clamp01(xRoom / horizontalRoom), Mathf.Clamp01(yRoom / verticalRoom));
     }
 
     private Vector3 ClampCameraPosition(Vector3 position, float halfWidth, float halfHeight)
@@ -385,8 +382,7 @@ public partial class GameBootstrap : MonoBehaviour
     private void ResetCameraRig()
     {
         cameraReady = false;
-        cameraPlayerVelocity = Vector2.zero;
-        if (Player != null) lastCameraPlayerPosition = Player.transform.position;
+        cameraMovementLead = Vector2.zero;
     }
 
 
@@ -428,7 +424,7 @@ public partial class GameBootstrap : MonoBehaviour
             float grain = Random.Range(-.012f, .012f);
             Color color = new Color(.075f + vignette * .024f + grain, .105f + vignette * .028f + grain, .12f + vignette * .034f + grain);
             int gx = x % 64, gy = y % 64;
-            if (gx < 2 || gy < 2) color *= .62f;
+            if (gx < 2 || gy < 2) color *= .82f;
             if ((x * 19 + y * 43) % 1517 < 4) color = Color.Lerp(color, new Color(.07f, .32f, .34f), .3f);
             texture.SetPixel(x, y, color);
         }
@@ -583,9 +579,9 @@ public partial class GameBootstrap : MonoBehaviour
         {
             if (characterButtons[i] == null) continue;
             CharacterProfile profile = CharacterRoster.All[i]; bool isSelected = i == (int)SelectedCharacter;
-            characterCardBodies[i].color = isSelected ? UiKit.Mix(new Color(.03f, .055f, .075f), profile.Accent, .16f) : new Color(1, 1, 1, .03f);
-            characterCardEdges[i].color = isSelected ? UiKit.Alpha(profile.Accent, .95f) : new Color(1, 1, 1, .07f);
-            characterCardGlows[i].color = UiKit.Alpha(profile.Accent, isSelected ? .24f : 0f);
+            characterCardBodies[i].color = isSelected ? UiKit.Mix(new Color(.03f, .055f, .075f), profile.Accent, .11f) : new Color(1, 1, 1, .018f);
+            characterCardEdges[i].color = isSelected ? UiKit.Alpha(profile.Accent, .68f) : new Color(1, 1, 1, .045f);
+            characterCardGlows[i].color = UiKit.Alpha(profile.Accent, isSelected ? .12f : 0f);
             characterCardBars[i].color = isSelected ? profile.Accent : new Color(1, 1, 1, .12f);
             characterCardIndices[i].color = isSelected ? UiKit.TextMain : UiKit.TextDim;
             var rect = (RectTransform)characterButtons[i].transform;
@@ -755,7 +751,7 @@ public partial class GameBootstrap : MonoBehaviour
     {
         if (State != RunState.Playing || victoryPending || pendingBossRewardStage > 0 || Xp < XpNeeded) return false;
         Xp -= XpNeeded; Level++;
-        bool weaponMilestone = Level > 1 && (Level - 1) % GameRules.WeaponChoiceInterval == 0;
+        bool weaponMilestone = Level > 1 && Level % GameRules.WeaponChoiceInterval == 0;
         SetUpgradeChoices(weaponMilestone ? UpgradeFlow.Weapon : UpgradeFlow.Normal);
         return true;
     }

@@ -24,7 +24,11 @@ public partial class GameBootstrap
 
     private void BuildUI()
     {
-        if (FindFirstObjectByType<EventSystem>() == null) new GameObject("Event System", typeof(EventSystem), typeof(StandaloneInputModule));
+        var eventSystem = FindFirstObjectByType<EventSystem>();
+        if (eventSystem == null)
+            eventSystem = new GameObject("Event System", typeof(EventSystem), typeof(StandaloneInputModule)).GetComponent<EventSystem>();
+        if (eventSystem.TryGetComponent<StandaloneInputModule>(out var inputModule) && inputModule.inputOverride == null)
+            inputModule.inputOverride = eventSystem.gameObject.AddComponent<StarfallUiInput>();
         var go = new GameObject("Starfall UI", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)); canvas = go.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 1000;
         var scaler = go.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1440, 810); scaler.matchWidthOrHeight = .5f;
         hudRoot = new GameObject("HUD"); hudRoot.transform.SetParent(canvas.transform, false); Stretch(hudRoot.AddComponent<RectTransform>());
@@ -42,7 +46,7 @@ public partial class GameBootstrap
 
     private void BuildHud()
     {
-        Art(hudRoot.transform, "Screen vignette", UiKit.Vignette, new Color(0, 0, 0, .55f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        Art(hudRoot.transform, "Screen vignette", UiKit.Vignette, new Color(0, 0, 0, .36f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         BuildTelemetry();
         BuildVitals();
         BuildExperience();
@@ -55,18 +59,22 @@ public partial class GameBootstrap
 
     private void BuildBossWarning()
     {
-        var panel = Node(hudRoot.transform, "Boss warning", AnchorCC, new Vector2(0, 30), new Vector2(680, 160));
+        var panel = Node(hudRoot.transform, "Boss warning", AnchorCC, new Vector2(0, -32), new Vector2(680, 160));
         bossWarningPanel = panel.gameObject;
         bossWarningGroup = panel.gameObject.AddComponent<CanvasGroup>();
-        Art(panel, "Backing", UiKit.Soft, new Color(.075f, .008f, .022f, .94f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(panel, "Band", UiKit.GradientRight, new Color(1f, .05f, .12f, .22f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(panel, "Top line", UiKit.Solid, UiKit.Alpha(GameRules.Pink, 1f), AnchorTC, new Vector2(0, -18), new Vector2(540, 3));
-        Art(panel, "Bottom line", UiKit.Solid, UiKit.Alpha(GameRules.Pink, .8f), AnchorBC, new Vector2(0, 18), new Vector2(420, 2));
-        Art(panel, "Left mark", UiKit.Diamond, UiKit.Alpha(GameRules.Pink, 1f), AnchorCC, new Vector2(-310, 0), new Vector2(10, 10));
-        Art(panel, "Right mark", UiKit.Diamond, UiKit.Alpha(GameRules.Pink, 1f), AnchorCC, new Vector2(310, 0), new Vector2(10, 10));
-        bossWarningTitle = Ct(panel, "WARNING", 46, new Vector2(0, -24), new Vector2(600, 56), Color.white, FontStyle.Bold, displayFont);
-        GlowText(bossWarningTitle, UiKit.Alpha(GameRules.Pink, .5f), 2f);
-        bossWarningSub = Ct(panel, "强敌接近", 13, new Vector2(0, -86), new Vector2(600, 20), UiKit.TextMain, FontStyle.Bold);
+        Art(panel, "Backing", UiKit.Soft, new Color(.055f, .012f, .028f, .8f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        Art(panel, "Signal wash", UiKit.GradientRight, new Color(1f, .05f, .12f, .045f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        var lineColor = UiKit.Alpha(GameRules.Pink, .82f);
+        var lineSize = new Vector2(420, 2);
+        Art(panel, "Top lock line", UiKit.Solid, lineColor, AnchorTC, new Vector2(0, -16), lineSize);
+        Art(panel, "Bottom lock line", UiKit.Solid, lineColor, AnchorBC, new Vector2(0, 16), lineSize);
+        Art(panel, "Lock mark", UiKit.Diamond, UiKit.Alpha(GameRules.Pink, .9f), AnchorCC, new Vector2(-246, 0), new Vector2(8, 8));
+        Art(panel, "Lock mark", UiKit.Diamond, UiKit.Alpha(GameRules.Pink, .9f), AnchorCC, new Vector2(246, 0), new Vector2(8, 8));
+        bossWarningTitle = MakeText(panel, "Warning title", "WARNING", 52, TextAnchor.MiddleCenter,
+            AnchorCC, AnchorCC, AnchorCC, new Vector2(0, 10), new Vector2(600, 68), Color.white, FontStyle.Bold, displayFont);
+        GlowText(bossWarningTitle, UiKit.Alpha(GameRules.Pink, .3f), 1.5f);
+        bossWarningSub = MakeText(panel, "Warning subtitle", "BOSS INCOMING", 13, TextAnchor.MiddleCenter,
+            AnchorCC, AnchorCC, AnchorCC, new Vector2(0, -44), new Vector2(600, 24), UiKit.TextMain, FontStyle.Bold, null);
         bossWarningPanel.SetActive(false);
     }
 
@@ -84,36 +92,33 @@ public partial class GameBootstrap
 
     private void BuildTelemetry()
     {
-        // Compact top-right readout: clock, level, stage name and wave progress only.
         float telemetryWidth = touchControls ? 252f : 220f;
-        var panel = Frame(hudRoot.transform, "Top telemetry", AnchorTR, new Vector2(-22, -20), new Vector2(telemetryWidth, 100), GameRules.Gold, .9f);
+        var panel = Frame(hudRoot.transform, "Top telemetry", AnchorTR, new Vector2(-22, -20), new Vector2(telemetryWidth, 82), GameRules.Gold, .9f, false);
         stageEdge = panel.Find("Edge").GetComponent<Image>();
         Art(panel, "Accent", UiKit.Solid, UiKit.Alpha(GameRules.Gold, .9f), AnchorTL, new Vector2(12, -12), new Vector2(2, 20));
         clockText = Lt(panel, "00:00", 26, new Vector2(14, -8), new Vector2(120, 32), UiKit.TextMain, FontStyle.Bold, displayFont);
         DropShadow(clockText, -2f);
         Rt(panel, "等级", 9, new Vector2(-12, -7), new Vector2(70, 12), UiKit.TextMute, FontStyle.Bold);
         levelText = Rt(panel, "01", 16, new Vector2(-12, -20), new Vector2(70, 20), GameRules.Gold, FontStyle.Bold, displayFont);
-        waveText = Lt(panel, GameRules.StageName(1), 12, new Vector2(14, -42), new Vector2(touchControls ? 224f : 192f, 28), UiKit.TextMain, FontStyle.Bold);
-        waveLabelText = Lt(panel, UiKit.Track("WAVE 01 / 18"), 8, new Vector2(14, -70), new Vector2(touchControls ? 170f : 150f, 12), UiKit.TextMute, FontStyle.Bold);
-        Image waveGlow;
-        waveFill = Bar(panel, "Wave progress", 14f, 14f, -82f, 4f, new Color(.09f, .15f, .18f, .85f), GameRules.Cyan, new Color(1, 1, 1, .1f), out waveGlow, out _, 18);
-        waveGlow.color = UiKit.Alpha(GameRules.Cyan, .14f);
+        stageNameText = Lt(panel, GameRules.StageName(1), 12, new Vector2(14, -43), new Vector2(touchControls ? 224f : 192f, 22), UiKit.TextMain, FontStyle.Bold);
+        waveFill = Bar(panel, "Wave progress", 14f, 14f, -68f, 3f, new Color(.09f, .15f, .18f, .72f), GameRules.Cyan, new Color(1, 1, 1, .06f), out var waveGlow, out _, 12);
+        waveGlow.color = UiKit.Alpha(GameRules.Cyan, .08f);
     }
 
     private void BuildVitals()
     {
-        var panel = Frame(hudRoot.transform, "Vitals", AnchorTL, new Vector2(22, -20), new Vector2(276, 84), GameRules.Pink, .88f);
+        var panel = Frame(hudRoot.transform, "Vitals", AnchorTL, new Vector2(22, -20), new Vector2(260, 84), GameRules.Pink, .88f, false);
         healthEdge = panel.Find("Edge").GetComponent<Image>();
         Art(panel, "Pulse dot", UiKit.Diamond, UiKit.Alpha(GameRules.Pink, .95f), AnchorTL, new Vector2(13, -9), new Vector2(5, 5));
         Lt(panel, "生命", 12, new Vector2(24, -5), new Vector2(150, 16), UiKit.TextDim, FontStyle.Bold);
         healthText = Rt(panel, "100 / 100", 16, new Vector2(-12, -4), new Vector2(150, 18), UiKit.TextMain, FontStyle.Bold, displayFont);
-        hpFill = Bar(panel, "Health fill", 14f, 14f, -29f, 8f, new Color(.16f, .07f, .1f, .85f), GameRules.Pink, new Color(1, 1, 1, .22f), out hpGlow, out hpGhost, 8);
+        hpFill = Bar(panel, "Health fill", 14f, 14f, -29f, 7f, new Color(.16f, .07f, .1f, .85f), GameRules.Pink, new Color(1, 1, 1, .18f), out hpGlow, out hpGhost, 6);
         HLine(panel, "Divider", 14f, -43f, 1f, new Color(1, 1, 1, .07f));
         Art(panel, "Dash dot", UiKit.Diamond, UiKit.Alpha(GameRules.Cyan, .9f), AnchorTL, new Vector2(13, -49), new Vector2(5, 5));
         Lt(panel, "冲刺", 12, new Vector2(24, -45), new Vector2(120, 16), UiKit.TextDim, FontStyle.Bold);
         dashText = Rt(panel, "就绪", 13, new Vector2(-12, -45), new Vector2(140, 16), GameRules.Cyan, FontStyle.Bold);
         Image dashGlow;
-        dashFill = Bar(panel, "Dash cooldown", 14f, 14f, -67f, 6f, new Color(.08f, .13f, .16f, .9f), GameRules.Cyan, new Color(1, 1, 1, .16f), out dashGlow, out _, 0);
+        dashFill = Bar(panel, "Dash cooldown", 14f, 14f, -67f, 5f, new Color(.08f, .13f, .16f, .9f), GameRules.Cyan, new Color(1, 1, 1, .12f), out dashGlow, out _, 0);
     }
 
     private void BuildExperience()
@@ -171,31 +176,27 @@ public partial class GameBootstrap
 
     private void BuildBossPanel()
     {
-        var boss = Frame(hudRoot.transform, "Boss health", AnchorTC, new Vector2(25f, -18), new Vector2(520f, 88), GameRules.Pink, .95f);
+        var boss = Frame(hudRoot.transform, "Boss health", AnchorTC, new Vector2(25f, -18), new Vector2(520f, 66), GameRules.Pink, .95f, false);
         bossFrameEdge = boss.Find("Edge").GetComponent<Image>();
-        var hex = Node(boss, "Boss portrait frame", AnchorTL, new Vector2(12, -10), new Vector2(68, 68));
-        Art(hex, "Glow", UiKit.Glow, UiKit.Alpha(GameRules.Pink, .3f), new Vector2(0, 0), new Vector2(1, 1), AnchorCC, Vector2.zero, new Vector2(30, 30));
-        Art(hex, "Hex fill", UiKit.HexFill, new Color(.015f, .025f, .04f, .97f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        bossPortrait = Art(hex, "Boss portrait", null, Color.white, new Vector2(0, 0), new Vector2(1, 1), AnchorCC, Vector2.zero, new Vector2(-8, -8));
+        var portrait = Node(boss, "Boss portrait frame", AnchorTL, new Vector2(12, -9), new Vector2(48, 48));
+        Art(portrait, "Fill", UiKit.Solid, new Color(.02f, .03f, .05f, .96f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        bossPortrait = Art(portrait, "Boss portrait", null, Color.white, Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, new Vector2(-5, -5));
         bossPortrait.preserveAspect = true;
-        Art(hex, "Hex edge", UiKit.HexEdge, UiKit.Alpha(GameRules.Pink, .75f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        bossHeader = MakeText(boss, "Boss title", "噬影守望者", 13, TextAnchor.MiddleLeft, AnchorTL, AnchorTL, AnchorTL, new Vector2(96, -11), new Vector2(370, 22), GameRules.Pink, FontStyle.Bold, null);
-        bossText = Lm(boss, "PHASE I  /  HUNTER", 10, new Vector2(96, -35), new Vector2(330, 16), UiKit.TextDim);
-        Rt(boss, UiKit.Track("ARENA 01"), 9, new Vector2(-18, -13), new Vector2(120, 14), UiKit.TextMute, FontStyle.Bold);
-        bossFill = Bar(boss, "Boss health fill", 94f, 22f, -58f, 9f, new Color(.18f, .06f, .1f, .9f), GameRules.Pink, new Color(1, 1, 1, .25f), out bossGlow, out _, 4);
+        bossHeader = MakeText(boss, "Boss title", "噬影守望者", 13, TextAnchor.MiddleLeft, AnchorTL, AnchorTL, AnchorTL, new Vector2(72, -9), new Vector2(330, 20), GameRules.Pink, FontStyle.Bold, null);
+        bossText = Lm(boss, "PHASE I", 9, new Vector2(72, -27), new Vector2(330, 14), UiKit.TextDim);
+        bossFill = Bar(boss, "Boss health fill", 72f, 22f, -50f, 7f, new Color(.18f, .06f, .1f, .9f), GameRules.Pink, new Color(1, 1, 1, .18f), out bossGlow, out _, 4);
         bossPanel = boss.gameObject;
         bossPanel.SetActive(false);
     }
 
     private void BuildBanner()
     {
-        bannerRoot = Node(hudRoot.transform, "Banner", AnchorTC, new Vector2(45f, -122), new Vector2(520f, 40));
+        bannerRoot = Node(hudRoot.transform, "Banner", AnchorTC, new Vector2(45f, -122), new Vector2(460f, 32));
         bannerGroup = bannerRoot.gameObject.AddComponent<CanvasGroup>();
         bannerGroup.alpha = 0f; bannerGroup.blocksRaycasts = false;
-        Art(bannerRoot, "Backdrop", UiKit.Soft, new Color(.015f, .03f, .045f, .8f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(bannerRoot, "Edge", UiKit.SoftEdge, new Color(1, 1, 1, .06f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        Art(bannerRoot, "Signal line", UiKit.Solid, new Color(1, 1, 1, .18f), new Vector2(0, 0), new Vector2(1, 0), new Vector2(.5f, 0), Vector2.zero, new Vector2(-24, 1));
         bannerAccent = Art(bannerRoot, "Accent", UiKit.Solid, GameRules.Cyan, new Vector2(0, 0), new Vector2(1, 0), new Vector2(.5f, 0), Vector2.zero, new Vector2(0, 2));
-        bannerText = Mc(bannerRoot, "", 13, Color.white, FontStyle.Bold);
+        bannerText = Mc(bannerRoot, "", 12, Color.white, FontStyle.Bold);
         bannerText.gameObject.name = "Banner text";
     }
 
@@ -206,7 +207,7 @@ public partial class GameBootstrap
         if (touchControls)
         {
             hintText.text = "左侧任意位置拖动移动     右下按钮冲刺     武器自动攻击";
-            hintText.fontSize = 14;
+            hintText.fontSize = MobileTextSize(14);
             DropShadow(hintText, -1.5f);
         }
         hintText.rectTransform.pivot = new Vector2(.5f, 0); hintText.rectTransform.anchoredPosition = new Vector2(0f, touchControls ? 28f : 18f);
@@ -242,21 +243,29 @@ public partial class GameBootstrap
 
     private RectTransform Frame(Transform parent, string name, Vector2 anchor, Vector2 pos, Vector2 size, Color accent, float fillAlpha = .9f)
     {
+        return Frame(parent, name, anchor, pos, size, accent, fillAlpha, true);
+    }
+
+    private RectTransform Frame(Transform parent, string name, Vector2 anchor, Vector2 pos, Vector2 size, Color accent, float fillAlpha, bool brackets)
+    {
         var root = Node(parent, name, anchor, pos, size);
-        Art(root, "Shadow", UiKit.PanelFill, new Color(0, 0, 0, .5f), Vector2.zero, Vector2.one, AnchorCC, new Vector2(0, -6), new Vector2(16, 18));
+        Art(root, "Shadow", UiKit.PanelFill, new Color(0, 0, 0, .34f), Vector2.zero, Vector2.one, AnchorCC, new Vector2(0, -6), new Vector2(16, 18));
         Art(root, "Body", UiKit.PanelFill, UiKit.Alpha(UiKit.Panel, fillAlpha), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(root, "Edge", UiKit.PanelEdge, UiKit.Alpha(accent, .36f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Art(root, "Top sheen", UiKit.GradientRight, new Color(1, 1, 1, .06f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -1), new Vector2(-26, 2));
-        Bracket(root, "Bracket TL", AnchorTL, new Vector2(7, -7), 0f, accent, 18f);
-        Bracket(root, "Bracket TR", AnchorTR, new Vector2(-7, -7), -90f, accent, 18f);
-        Bracket(root, "Bracket BR", AnchorBR, new Vector2(-7, 7), 180f, accent, 18f);
-        Bracket(root, "Bracket BL", AnchorBL, new Vector2(7, 7), 90f, accent, 18f);
+        Art(root, "Edge", UiKit.PanelEdge, UiKit.Alpha(accent, .24f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        Art(root, "Top sheen", UiKit.GradientRight, new Color(1, 1, 1, .035f), new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -1), new Vector2(-26, 2));
+        if (brackets)
+        {
+            Bracket(root, "Bracket TL", AnchorTL, new Vector2(7, -7), 0f, accent, 18f);
+            Bracket(root, "Bracket TR", AnchorTR, new Vector2(-7, -7), -90f, accent, 18f);
+            Bracket(root, "Bracket BR", AnchorBR, new Vector2(-7, 7), 180f, accent, 18f);
+            Bracket(root, "Bracket BL", AnchorBL, new Vector2(7, 7), 90f, accent, 18f);
+        }
         return root;
     }
 
     private void Bracket(RectTransform parent, string name, Vector2 anchor, Vector2 pos, float rotation, Color color, float length)
     {
-        var image = Art(parent, name, UiKit.Bracket, UiKit.Alpha(color, .5f), anchor, pos, new Vector2(length, length));
+        var image = Art(parent, name, UiKit.Bracket, UiKit.Alpha(color, .32f), anchor, pos, new Vector2(length, length));
         image.rectTransform.localRotation = Quaternion.Euler(0, 0, rotation);
     }
 
@@ -282,14 +291,24 @@ public partial class GameBootstrap
         return fill;
     }
 
+    private int MobileTextSize(int size) => touchControls ? Mathf.Max(1, Mathf.RoundToInt(size * 1.3f)) : size;
+
     private Text MakeText(Transform parent, string name, string value, int size, TextAnchor align, Vector2 min, Vector2 max, Vector2 pivot, Vector2 pos, Vector2 dims, Color color, FontStyle style, Font font)
     {
         var text = NewUI<Text>(name, parent);
         var rect = text.rectTransform;
         rect.anchorMin = min; rect.anchorMax = max; rect.pivot = pivot; rect.anchoredPosition = pos; rect.sizeDelta = dims;
+        int baseSize = size;
+        size = MobileTextSize(size);
         text.text = value; text.font = font != null ? font : uiFont; text.fontSize = size; text.alignment = align; text.color = color; text.fontStyle = style;
         text.horizontalOverflow = HorizontalWrapMode.Wrap; text.verticalOverflow = VerticalWrapMode.Overflow;
         text.lineSpacing = 1.14f; text.raycastTarget = false;
+        if (touchControls)
+        {
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = baseSize;
+            text.resizeTextMaxSize = size;
+        }
         text.gameObject.AddComponent<LocalizedText>().Bind(text);
         return text;
     }
@@ -321,16 +340,27 @@ public partial class GameBootstrap
         body.color = filled ? UiKit.Alpha(accent, .94f) : UiKit.Alpha(UiKit.PanelSoft, .82f);
         body.raycastTarget = true; button.targetGraphic = body; button.transition = Selectable.Transition.None;
         var edge = Fill(root, "Edge", UiKit.SoftEdge, UiKit.Alpha(accent, filled ? .95f : .5f));
-        var label = Mc(root, caption, fontSize, filled ? UiKit.Ink : UiKit.TextMain, FontStyle.Bold);
+        var labelColor = filled ? UiKit.Ink : UiKit.TextMain;
+        var label = caption == null ? null : Mc(root, caption, fontSize, labelColor, FontStyle.Bold);
         button.onClick.AddListener(action);
         var hover = root.gameObject.AddComponent<UiHover>();
         hover.body = root; hover.edge = edge;
         hover.edgeIdle = UiKit.Alpha(accent, filled ? .95f : .5f); hover.edgeHot = UiKit.Alpha(accent, 1f);
         hover.fill = body; hover.fillIdle = body.color; hover.fillHot = filled ? UiKit.Light(accent, .12f) : UiKit.Alpha(UiKit.Shade(accent, .45f), .95f);
-        hover.label = label; hover.labelIdle = label.color; hover.labelHot = filled ? UiKit.Ink : Color.white;
+        hover.label = label; hover.labelIdle = labelColor; hover.labelHot = filled ? UiKit.Ink : Color.white;
         hover.hoverScale = 1.025f;
         return button;
     }
 
     // ---------------------------------------------------------- title screen
+}
+
+public sealed class StarfallUiInput : BaseInput
+{
+    public override bool GetButtonDown(string buttonName)
+    {
+        // Space confirms a focused menu control, but cannot confirm an upgrade.
+        return base.GetButtonDown(buttonName) ||
+            (buttonName == "Submit" && GameBootstrap.Game?.State != RunState.Upgrade && Input.GetKeyDown(KeyCode.Space));
+    }
 }

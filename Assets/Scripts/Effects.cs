@@ -81,6 +81,11 @@ public static class Effects
 
     public static void FloatingNumber(Vector3 position, string text, Color tint, bool heavy)
     {
+        FloatingNumber(position, text, tint, heavy ? FloatingNumberTier.Critical : FloatingNumberTier.Normal);
+    }
+
+    public static void FloatingNumber(Vector3 position, string text, Color tint, FloatingNumberTier tier)
+    {
         if (!ShowDamageNumbers) return;
         var canvas = UiCanvas(); if (canvas == null) return;
         var obj = TakeFromPool(LabelPool);
@@ -92,10 +97,14 @@ public static class Effects
         else obj.SetActive(true);
         obj.transform.SetParent(canvas.transform, false); obj.transform.SetAsLastSibling();
         var rect = obj.GetComponent<RectTransform>(); rect.sizeDelta = new Vector2(160, 36); rect.localScale = Vector3.one;
-        var label = obj.GetComponent<Text>(); label.font = LabelFont(); label.text = text; label.fontSize = heavy ? 20 : 15; label.alignment = TextAnchor.MiddleCenter; label.fontStyle = heavy ? FontStyle.Bold : FontStyle.Normal; label.color = tint; label.raycastTarget = false;
+        bool critical = tier == FloatingNumberTier.Critical;
+        bool fatal = tier == FloatingNumberTier.Fatal;
+        int size = fatal ? 24 : critical ? 18 : 13;
+        float alpha = fatal ? .98f : critical ? .94f : .72f;
+        var label = obj.GetComponent<Text>(); label.font = LabelFont(); label.text = text; label.fontSize = GameBootstrap.Game != null && GameBootstrap.Game.TouchControls ? Mathf.RoundToInt(size * 1.3f) : size; label.alignment = TextAnchor.MiddleCenter; label.fontStyle = critical || fatal ? FontStyle.Bold : FontStyle.Normal; label.color = new Color(tint.r, tint.g, tint.b, alpha); label.raycastTarget = false;
         label.horizontalOverflow = HorizontalWrapMode.Overflow; label.verticalOverflow = VerticalWrapMode.Overflow;
         var shadow = obj.GetComponent<Shadow>(); if (shadow == null) shadow = obj.AddComponent<Shadow>(); shadow.effectColor = new Color(0, 0, 0, .7f); shadow.effectDistance = new Vector2(1f, -1f);
-        obj.GetComponent<FloatingLabel>().Setup(position);
+        obj.GetComponent<FloatingLabel>().Setup(position, fatal ? 1.05f : critical ? .78f : .58f);
     }
 
     public static void Ring(Vector3 position, Color tint, float size, float duration)
@@ -112,7 +121,7 @@ public static class Effects
         Burst(position, GameRules.Cyan, 34 + stage * 10, .12f);
         Ring(position, primary, 4.8f + stage * .65f, .9f);
         Ring(position, Color.white, 2.2f + stage * .35f, .42f);
-        FloatingNumber(position + Vector3.up * 1.2f, "BOSS DOWN  /  WARDEN " + stage.ToString("00"), GameRules.Gold, true);
+        FloatingNumber(position + Vector3.up * 1.2f, "BOSS DOWN  /  WARDEN " + stage.ToString("00"), GameRules.Gold, FloatingNumberTier.Fatal);
         SoundBank.Play(SoundCue.BossDefeat, .65f);
         if (GameBootstrap.Game != null) GameBootstrap.Game.ShakeCamera(.34f + stage * .08f, .58f);
     }
@@ -137,7 +146,7 @@ public static class Effects
         Burst(position, tint, 30, .2f);
         Ring(position, tint, 2.4f, .55f);
         Ring(position, Color.white, 1.15f, .3f);
-        FloatingNumber(position + Vector3.up * .8f, "WEAPON EVOLVED", tint, true);
+        FloatingNumber(position + Vector3.up * .8f, "WEAPON EVOLVED", tint, FloatingNumberTier.Fatal);
         SoundBank.Play(SoundCue.Upgrade, .42f);
         if (GameBootstrap.Game != null) GameBootstrap.Game.ShakeCamera(.12f, .22f);
     }
@@ -383,10 +392,10 @@ public sealed class LineFade : MonoBehaviour
 
 public sealed class FloatingLabel : MonoBehaviour
 {
-    private Vector3 source; private RectTransform rect, canvasRect; private Canvas labelCanvas; private float age; private Camera cam;
-    public void Setup(Vector3 worldPosition)
+    private Vector3 source; private RectTransform rect, canvasRect; private Canvas labelCanvas; private float age, lifetime = .75f; private Camera cam;
+    public void Setup(Vector3 worldPosition, float life = .75f)
     {
-        source = worldPosition; rect = GetComponent<RectTransform>(); age = 0f; cam = Camera.main;
+        source = worldPosition; rect = GetComponent<RectTransform>(); age = 0f; lifetime = Mathf.Max(.2f, life); cam = Camera.main;
         labelCanvas = GetComponentInParent<Canvas>();
         canvasRect = labelCanvas != null ? labelCanvas.transform as RectTransform : null;
     }
@@ -399,10 +408,12 @@ public sealed class FloatingLabel : MonoBehaviour
         if (canvasRect != null && RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, point, labelCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : labelCanvas.worldCamera, out Vector2 local))
             rect.anchoredPosition = local;
         else rect.position = point;
-        var label = GetComponent<Text>(); label.color = new Color(label.color.r, label.color.g, label.color.b, Mathf.Clamp01((.75f - age) * 4));
-        if (age > .75f) Effects.ReleaseLabel(gameObject);
+        var label = GetComponent<Text>(); label.color = new Color(label.color.r, label.color.g, label.color.b, Mathf.Clamp01((lifetime - age) / Mathf.Min(.22f, lifetime * .35f)));
+        if (age > lifetime) Effects.ReleaseLabel(gameObject);
     }
 }
+
+public enum FloatingNumberTier { Normal, Critical, Fatal }
 
 public enum SoundCue { Shot, Scatter, Arc, Dash, Hurt, Pickup, Upgrade, BossDefeat }
 

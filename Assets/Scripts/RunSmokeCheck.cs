@@ -19,11 +19,13 @@ public sealed class RunSmokeCheck : MonoBehaviour
     private string folder;
     private float started;
     private bool complete;
+    private static bool englishRun;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Install()
     {
         if (!Environment.GetCommandLineArgs().Contains("--smoke-test")) return;
-        PlayerPrefs.SetInt("Starfall.Settings.Language", 0); PlayerPrefs.Save();
+        englishRun = Environment.GetCommandLineArgs().Contains("--smoke-en");
+        PlayerPrefs.SetInt("Starfall.Settings.Language", englishRun ? 1 : 0); PlayerPrefs.Save();
         var obj = new GameObject("Development smoke check"); DontDestroyOnLoad(obj); obj.AddComponent<RunSmokeCheck>();
     }
     private void Awake()
@@ -59,14 +61,15 @@ public sealed class RunSmokeCheck : MonoBehaviour
     {
         yield return null; yield return null;
         var game = GameBootstrap.Game;
-        // Regression runs verify the Chinese baseline first; the English route is tested at the end.
-        GameSettings.Language = 0; GameSettings.Apply(); yield return null;
+        // Regression runs verify the selected baseline; --smoke-en keeps the full route in English.
+        GameSettings.Language = englishRun ? 1 : 0; GameSettings.Apply(); yield return null;
         File.WriteAllText(Path.Combine(folder, "viewport.txt"),
             $"Screen: {Screen.width} x {Screen.height}\nSystem safe area: {Screen.safeArea}\nCamera pixel rect: {Camera.main.pixelRect}\nTouch: {game.TouchControls}\n");
         Check(game != null && game.State == RunState.Menu, "Menu initializes");
         var musicKeys = new[] { "music_menu", "music_stage1", "music_stage2", "music_stage3", "music_boss1", "music_boss2", "music_boss3", "music_victory", "music_defeat" };
         Check(musicKeys.All(key => Resources.Load<AudioClip>("Audio/" + key) != null), "All ACE-Step background music clips load");
         yield return Capture("01-menu");
+        AuditEnglish("menu");
         if (game.TouchControls)
         {
             ValidateMobileLayout("Phone menu layout", "Select pilot", "Settings");
@@ -106,12 +109,13 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(pilotCards.All(b => { var image = b.GetComponentsInChildren<Image>().FirstOrDefault(i => i.name == "Pilot portrait"); return image != null && image.preserveAspect && image.rectTransform.rect.height > image.rectTransform.rect.width; }), "Archive cards preserve the portrait aspect ratio");
         var featuredPortrait = FindObjectsByType<Image>(FindObjectsSortMode.None).FirstOrDefault(i => i.name == "Featured portrait");
         Check(featuredPortrait != null && featuredPortrait.preserveAspect && featuredPortrait.sprite != null, "Selected pilot dossier uses a large aspect-preserving portrait");
-        var rinCard = pilotCards.FirstOrDefault(b => b.GetComponentsInChildren<Text>().Any(t => t.text.Contains("白濑 凛")));
+        var rinCard = pilotCards.FirstOrDefault(b => b.GetComponentsInChildren<Text>().Any(t => t.text.Contains("白濑 凛") || t.text.Contains("Rin")));
         Check(rinCard != null, "Cryo pilot card is discoverable");
         yield return Capture("01-characters");
+        AuditEnglish("characters");
         if (rinCard != null) rinCard.onClick.Invoke(); yield return null;
         Check(game.CurrentCharacter.Id == CharacterKind.Rin, "Pilot selection changes loadout");
-        var start = FindObjectsByType<Button>(FindObjectsSortMode.None).First(b => b.GetComponentInChildren<Text>().text.Contains("出击"));
+        var start = FindObjectsByType<Button>(FindObjectsSortMode.None).First(b => b.GetComponentInChildren<Text>().text.Contains("出击") || b.GetComponentInChildren<Text>().text.Contains("DEPLOY"));
         start.onClick.Invoke(); yield return null;
         Check(game.State == RunState.Playing && game.Player != null, "Begin button starts run");
         if (game.TouchControls)
@@ -201,15 +205,12 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(GameRules.Choices(capped).Count == 3, "Capped upgrade pool still produces three safe recovery options");
         var reinforcements = GameRules.WeaponChoices(capped);
         Check(reinforcements.Count == 3 && reinforcements.Select(option => option.Id).SequenceEqual(new[] { -1, -2, -3 }) && reinforcements[0].Description.Contains("伤害 +10%") && reinforcements[1].Description.Contains("攻击速度 +8%") && reinforcements[2].Description.Contains("暴击率 +6%"), "Fully evolved armory offers the three specified armament boosts");
-        float damageCurve = 0f, hasteCurve = 0f, speedCurve = 0f;
-        for (int rank = 0; rank < GameRules.MaxUpgradeRank; rank++)
-        {
-            damageCurve += GameRules.DamageUpgradeAtRank(rank);
-            hasteCurve += GameRules.HasteUpgradeAtRank(rank);
-            speedCurve += GameRules.SpeedUpgradeAtRank(rank);
-        }
-        Check(damageCurve > 2.84f && damageCurve < 2.86f && hasteCurve > 1.73f && hasteCurve < 1.75f && speedCurve > .69f && speedCurve < .71f,
-            "Damage, haste and speed upgrades use the additive xlsm values");
+        float damageCurve = Enumerable.Range(0, GameRules.MaxRank(5)).Sum(GameRules.DamageUpgradeAtRank);
+        float hasteCurve = Enumerable.Range(0, GameRules.MaxRank(6)).Sum(GameRules.HasteUpgradeAtRank);
+        float speedCurve = Enumerable.Range(0, GameRules.MaxRank(7)).Sum(GameRules.SpeedUpgradeAtRank);
+        Check(Mathf.Approximately(damageCurve, 2.50f) && Mathf.Approximately(hasteCurve, 1.74f)
+            && Mathf.Approximately(speedCurve, .50f) && GameRules.MaxRank(7) == 5,
+            "Damage, haste and speed upgrades reach their expected additive totals at their rank caps");
         float armorCurve = 0f, regenerationCurve = 0f;
         for (int rank = 0; rank < GameRules.MaxRank(13); rank++) armorCurve += GameRules.ArmorUpgradeAtRank(rank);
         for (int rank = 0; rank < GameRules.MaxRank(12); rank++) regenerationCurve += GameRules.RegenerationUpgradeAtRank(rank);
@@ -239,8 +240,8 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(Enumerable.Range(0, 5).Select(GameRules.WeaponColor).Distinct().Count() == 5, "All five signature weapons use distinct colors");
         Check(GameRules.MaxWeaponRank == 5 && pulseMax / pulseStart < 8.5f && scatterMax / scatterStart < 20f && arcMax / arcStart < 13f && cryoMax / cryoStart < 9f && bladeMax / bladeStart < 6f && GameRules.ArcDamage(1) * 1.25f >= 22 && GameRules.OrbitDamage(1) >= 20,
             "All five signature weapon rank curves support the extended level cap");
-        Check(GameRules.MaxUpgradeRank == 7 && GameRules.Describe(5, new RunStats()).Description.Contains("+25%") && GameRules.Describe(6, new RunStats()).Description.Contains("+15%") && GameRules.Describe(7, new RunStats()).Description.Contains("+10%") && GameRules.Describe(8, new RunStats()).Description.Contains("+20%") && GameRules.Describe(10, new RunStats()).Description.Contains("+10%") && GameRules.Describe(12, new RunStats()).Description.Contains("1.00"),
-            "Upgrade cards describe the additive xlsm values");
+        Check(GameRules.MaxUpgradeRank == 7 && GameRules.Describe(5, new RunStats()).Description.Contains("+20%") && GameRules.Describe(6, new RunStats()).Description.Contains("+15%") && GameRules.Describe(7, new RunStats()).Description.Contains("+10%") && GameRules.Describe(8, new RunStats()).Description.Contains("+20%") && GameRules.Describe(10, new RunStats()).Description.Contains("+10%") && GameRules.Describe(12, new RunStats()).Description.Contains("1.00"),
+            "Upgrade cards describe the additive values");
         var evolutionStats = new RunStats();
         for (int i = 0; i < 5; i++) { evolutionStats.Weapons[i] = 1; evolutionStats.EvolvedWeapons[i] = true; }
         evolutionStats.EvolvedWeapons[0] = false;
@@ -256,6 +257,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(GameRules.OrbitHitIntervalEvolved < GameRules.OrbitHitInterval && GameRules.DescribeEvolution(0).Description.Contains("三颗子弹"), "Evolved pulse fires a three-way volley and evolved orbit hits faster");
         CheckCardText("Stat draft");
         yield return Capture("03-upgrades");
+        AuditEnglish("upgrades");
         int healthBeforeExpansion = game.Stats.MaxHealth;
         typeof(PlayerActor).GetField("health", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(game.Player, 55f);
         typeof(GameBootstrap).GetProperty("Xp").SetValue(game, 0);
@@ -263,7 +265,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Invoke(game, "ChooseUpgrade", 0); yield return null;
         Check(game.Stats.MaxHealth == healthBeforeExpansion + 20 && game.Stats.Ranks[14] == 1 && game.Player.Health == 95, "Selecting health expansion raises the cap and heals immediately");
         Check(game.State == RunState.Playing && Time.timeScale == 1, "Upgrade choice resumes game");
-        typeof(GameBootstrap).GetProperty("Level").SetValue(game, 4); typeof(GameBootstrap).GetProperty("Xp").SetValue(game, 0);
+        typeof(GameBootstrap).GetProperty("Level").SetValue(game, 3); typeof(GameBootstrap).GetProperty("Xp").SetValue(game, 0);
         int unlockedBeforeWeaponOffer = game.Stats.Weapons.Count(rank => rank > 0);
         game.AddXp(game.XpNeeded); yield return null;
         var weaponChoices = (List<UpgradeOption>)choiceField.GetValue(game);
@@ -273,6 +275,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(cards.All(b => ((RectTransform)b.transform).sizeDelta.x > 246), "Weapon draft uses a wider card layout than stat upgrades");
         CheckCardText("Weapon draft");
         yield return Capture("03-weapons");
+        AuditEnglish("weapons");
         var selectedWeaponOption = weaponChoices[0];
         int selectedWeaponBefore = selectedWeaponOption.Id >= 0 ? game.Stats.Weapons[selectedWeaponOption.Id] : 0;
         var selectedWeaponCard = cards.FirstOrDefault(card => card.GetComponentsInChildren<Text>().Any(text => text.name == "Choice title" && text.text.Contains(selectedWeaponOption.Title))) ?? cards[0];
@@ -286,7 +289,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         for (int i = 0; i < 5; i++) { game.Stats.Weapons[i] = GameRules.MaxWeaponRank; game.Stats.EvolvedWeapons[i] = true; }
         for (int boost = 0; boost < 3; boost++)
         {
-            typeof(GameBootstrap).GetProperty("Level").SetValue(game, 8); typeof(GameBootstrap).GetProperty("Xp").SetValue(game, 0);
+            typeof(GameBootstrap).GetProperty("Level").SetValue(game, 7); typeof(GameBootstrap).GetProperty("Xp").SetValue(game, 0);
             game.AddXp(game.XpNeeded); yield return null;
             var boosts = (List<UpgradeOption>)choiceField.GetValue(game);
             Check(boosts.Count == 3 && boosts.Select(option => option.Id).SequenceEqual(new[] { -1, -2, -3 }), "Fully unlocked armory offers three reinforcement choices");
@@ -328,6 +331,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         yield return new WaitForSeconds(1.5f);
         game.Stats.EvolvedWeapons[(int)WeaponKind.Pulse] = true;
         yield return Capture("02-combat");
+        AuditEnglish("combat-hud");
         var hudFlags = BindingFlags.Instance | BindingFlags.NonPublic;
         var bannerNode = (RectTransform)typeof(GameBootstrap).GetField("bannerRoot", hudFlags).GetValue(game);
         var hintNode = (Text)typeof(GameBootstrap).GetField("hintText", hudFlags).GetValue(game);
@@ -336,6 +340,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(game.State == RunState.CharacterSheet && Time.timeScale == 0, "C opens the pilot status sheet");
         Check(!bannerNode.gameObject.activeSelf && !hintNode.enabled, "Pilot sheet hides the combat banner and control hint");
         yield return Capture("06-pilot-sheet");
+        AuditEnglish("pilot-sheet");
         Invoke(game, "ClosePilotSheet"); yield return null;
         Check(game.State == RunState.Playing && Time.timeScale == 1, "Closing the pilot sheet resumes the run");
         Check(bannerNode.gameObject.activeSelf, "Closing the pilot sheet restores a still-running banner");
@@ -343,6 +348,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Invoke(game, "ShowBossWarning", 1);
         yield return new WaitForSecondsRealtime(.3f);
         yield return Capture("09-warning");
+        AuditEnglish("boss-warning");
         yield return new WaitForSecondsRealtime(2.5f);
         typeof(GameBootstrap).GetProperty("Elapsed").SetValue(game, 181f);
         yield return new WaitForSeconds(1.4f);
@@ -373,6 +379,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
             yield return new WaitForSeconds(.2f);
             Check(game.Boss.PhaseTwo, "Boss enters second phase below half health");
             yield return Capture("04-boss");
+        AuditEnglish("boss");
             float damageBeforeReward = game.Stats.Damage; float hasteBeforeReward = game.Stats.Haste; float critBeforeReward = game.Stats.Crit; int maxHealthBeforeReward = game.Stats.MaxHealth;
             int firstBossHealth = game.Boss.MaxHealth;
             game.Boss.Hit(100000, true, Vector2.zero); yield return null;
@@ -387,6 +394,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
             Check(cards.All(b => ((RectTransform)b.transform).sizeDelta.y > 310), "Boss draft has the largest reward-card layout");
             CheckCardText("Boss core draft");
             yield return Capture("04-boss-reward");
+        AuditEnglish("boss-reward");
             Invoke(game, "ChooseUpgrade", 0); yield return null;
             Check(Mathf.Approximately(game.Stats.Damage, damageBeforeReward * 1.30f) && Mathf.Approximately(game.Stats.Haste, hasteBeforeReward * 1.20f) && Mathf.Approximately(game.Stats.Crit, critBeforeReward + .20f) && game.Stats.MaxHealth == maxHealthBeforeReward && game.Player.Health == game.Player.MaxHealth, "Overload core multiplies final damage +30%, haste +20% and adds +20% critical chance");
             Check(game.BossTransitionRemaining >= GameRules.StageTwoIntermission - 1 && game.BossesDefeated == 1, "Core selection begins a two-minute tier-two minion phase");
@@ -455,6 +463,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
             Check(!game.HasClaimedBossCore(2), "Final boss no longer awards a third core");
             CheckResultLayout("Victory");
             yield return Capture("05-victory");
+        AuditEnglish("victory");
         }
         Invoke(game, "RestartRun"); yield return new WaitForSecondsRealtime(.7f);
         game = GameBootstrap.Game;
@@ -467,6 +476,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(game.State == RunState.Defeat, "Player death opens defeat screen");
         CheckResultLayout("Defeat");
         yield return Capture("07-defeat");
+        AuditEnglish("defeat");
         Invoke(game, "PlayAgain"); yield return new WaitForSecondsRealtime(.7f);
         Check(GameBootstrap.Game.State == RunState.Playing && GameBootstrap.Game.Player != null, "Play again starts a fresh run directly");
         Check(exceptions.Count == 0, "No runtime exceptions");
@@ -534,6 +544,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         game.RequestPause(); yield return null;
         Check(game.State == RunState.Paused && game.TouchMove == Vector2.zero, "Pause action opens menu and clears movement");
         yield return Capture("10-phone-pause");
+        AuditEnglish("pause");
         Invoke(game, "Resume");
     }
 
@@ -606,7 +617,8 @@ public sealed class RunSmokeCheck : MonoBehaviour
         string mode = touch ? "touch" : "desktop";
         var entry = FindObjectsByType<Button>(FindObjectsSortMode.None).First(b => b.name == "Settings");
         var entryRect = (RectTransform)entry.transform;
-        Check(entryRect.rect.height >= (touch ? 64f : 44f) && entryRect.rect.width >= 150f, "Title menu Settings entry has a comfortable " + mode + " hit area");
+        float minimumSize = touch ? 64f : 44f;
+        Check(entryRect.rect.height >= minimumSize && entryRect.rect.width >= minimumSize, "Title menu Settings entry has a comfortable " + mode + " hit area");
         Check(Camera.main.pixelRect.Contains(ScreenRect(entryRect).min) && Camera.main.pixelRect.Contains(ScreenRect(entryRect).max), "Title menu Settings entry stays inside the viewport");
         entry.onClick.Invoke(); yield return null;
         RectTransform Find(string name) => FindObjectsByType<RectTransform>(FindObjectsSortMode.None).FirstOrDefault(r => r.name == name);
@@ -640,6 +652,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
             bool targets = page.GetComponentsInChildren<Button>().Select(b => (RectTransform)b.transform).All(r => r.rect.height >= (touch ? 56f : 40f));
             Check(targets, "Settings page " + pages[i] + " buttons meet the " + mode + " target height");
             yield return Capture("12-settings-" + (i + 1) + "-" + files[i]);
+            AuditEnglish("settings-" + files[i]);
         }
 
         // Key controls exist on each page and settings save/apply immediately.
@@ -651,7 +664,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         {
             master.value = 37f; yield return null;
             var valueText = master.transform.parent.GetComponentsInChildren<Text>().FirstOrDefault(t => t.name == "Value");
-            Check(GameSettings.Master == 35 && PlayerPrefs.GetInt("Starfall.Settings.Master") == 35 && Mathf.Abs(AudioListener.volume - .35f) < .01f && valueText != null && valueText.text == "35%", "Master slider snaps to 5, saves, applies and refreshes its readout");
+            Check(GameSettings.Master == 37 && PlayerPrefs.GetInt("Starfall.Settings.Master") == 37 && Mathf.Abs(AudioListener.volume - .37f) < .01f && valueText != null && valueText.text == "37%", "Master slider smoothly saves, applies and refreshes its readout");
             var fill = master.fillRect; var handle = master.handleRect;
             Check(fill.rect.height <= 8f && handle.rect.height <= (touch ? 34f : 26f) && Mathf.Abs(handle.rect.width - handle.rect.height) < 1f, "Slider fill stays a thin track and the knob stays round");
         }
@@ -714,6 +727,66 @@ public sealed class RunSmokeCheck : MonoBehaviour
         Check(backup.All(p => p.Value.HasValue ? PlayerPrefs.GetInt(p.Key) == p.Value.Value : !PlayerPrefs.HasKey(p.Key)), "Local settings preferences restored after the settings test");
     }
 
+    private void AuditEnglish(string label)
+    {
+        int previous = GameSettings.Language;
+        GameSettings.Language = 1; GameSettings.Apply();
+        Localization.RefreshAll();
+        var bad = FindObjectsByType<Text>(FindObjectsSortMode.None)
+            .Where(t => t.gameObject.activeInHierarchy && HasChinese(t.text))
+            .Where(t => !IsBilingualTitle(t.text))
+            .Select(t => t.name + " = " + t.text)
+            .Distinct()
+            .ToArray();
+        Check(bad.Length == 0, "English-only " + label + (bad.Length == 0 ? string.Empty : ": " + string.Join(" | ", bad)));
+        AuditChinese(label);
+        GameSettings.Language = previous; GameSettings.Apply();
+    }
+
+    private void AuditChinese(string label)
+    {
+        int previous = GameSettings.Language;
+        GameSettings.Language = 0; GameSettings.Apply();
+        Localization.RefreshAll();
+        var bad = FindObjectsByType<Text>(FindObjectsSortMode.None)
+            .Where(t => t.gameObject.activeInHierarchy && HasLatin(t.text))
+            .Where(t => !IsBilingualTitle(t.text) && !IsAllowedChineseKeyHint(t.text))
+            .Select(t => t.name + " = " + t.text)
+            .Distinct()
+            .ToArray();
+        Check(bad.Length == 0, "Chinese-only " + label + (bad.Length == 0 ? string.Empty : ": " + string.Join(" | ", bad)));
+        GameSettings.Language = previous; GameSettings.Apply();
+    }
+
+    private static bool HasLatin(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return false;
+        foreach (char c in text)
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) return true;
+        return false;
+    }
+
+    private static bool IsAllowedChineseKeyHint(string text)
+    {
+        string plain = text.Trim();
+        return plain == "STARFALL" || plain == "English" ||
+            text.Contains("WASD") || text.Contains("ESC") || text.Contains("C /");
+    }
+
+    private static bool HasChinese(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return false;
+        foreach (char c in text)
+            if (c >= '\u4e00' && c <= '\u9fff') return true;
+        return false;
+    }
+
+    private static bool IsBilingualTitle(string text)
+    {
+        string plain = System.Text.RegularExpressions.Regex.Replace(text, "\\s", string.Empty);
+        return plain.Contains("星陨") && plain.Contains("微光");
+    }
+
     private void ValidateMobileLayout(string layoutName, params string[] elementNames)
     {
         var nodes = FindObjectsByType<RectTransform>(FindObjectsSortMode.None);
@@ -743,7 +816,7 @@ public sealed class RunSmokeCheck : MonoBehaviour
         return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
     }
 
-    // Result / pause modal: summary, actions and the corner utility buttons must not collide.
+    // Result / pause modal: summary and actions must fit inside the frame.
     private void CheckResultLayout(string label)
     {
         Canvas.ForceUpdateCanvases();
@@ -751,16 +824,18 @@ public sealed class RunSmokeCheck : MonoBehaviour
         var modal = rects.FirstOrDefault(r => r.name == "Modal");
         var primary = rects.FirstOrDefault(r => (r.name == "Play again" || r.name == "Resume") && modal != null && r.IsChildOf(modal));
         var back = rects.FirstOrDefault(r => r.name == "Back to title" && modal != null && r.IsChildOf(modal));
-        var summary = rects.FirstOrDefault(r => r.name == "Result summary");
-        if (modal == null || primary == null || back == null || summary == null) { Check(false, label + " result layout nodes exist"); return; }
-        Rect primaryRect = ScreenRect(primary), backRect = ScreenRect(back), summaryRect = ScreenRect(summary), modalRect = ScreenRect(modal);
-        Check(!summaryRect.Overlaps(primaryRect) && !summaryRect.Overlaps(backRect) && !primaryRect.Overlaps(backRect), label + " summary and action buttons do not overlap");
-        Check(modalRect.Contains(primaryRect.min) && modalRect.Contains(primaryRect.max) && modalRect.Contains(backRect.min) && modalRect.Contains(backRect.max), label + " action buttons stay inside the result frame");
-        foreach (string corner in new[] { "Settings" })
+        if (modal == null || primary == null || back == null) { Check(false, label + " result layout nodes exist"); return; }
+        var summary = modal.Find("Result summary") as RectTransform;
+        Check(primary.name == "Resume" ? summary == null : summary != null, label + " has the expected summary visibility");
+        Rect primaryRect = ScreenRect(primary), backRect = ScreenRect(back), modalRect = ScreenRect(modal);
+        Check(!primaryRect.Overlaps(backRect), label + " action buttons do not overlap");
+        if (summary != null)
         {
-            var node = rects.FirstOrDefault(r => r.name == corner);
-            if (node != null) Check(!ScreenRect(node).Overlaps(modalRect), label + " " + corner + " stays clear of the result frame");
+            Rect summaryRect = ScreenRect(summary);
+            Check(!summaryRect.Overlaps(primaryRect) && !summaryRect.Overlaps(backRect), label + " summary clears the action buttons");
         }
+        Check(modalRect.Contains(primaryRect.min) && modalRect.Contains(primaryRect.max) && modalRect.Contains(backRect.min) && modalRect.Contains(backRect.max), label + " action buttons stay inside the result frame");
+        Check(!rects.Any(r => r.name == "Settings" && r.GetComponent<Button>() != null), label + " has no Settings entry");
     }
 
     // Upgrade cards: description text must end above the badge divider (52 units from the card bottom).

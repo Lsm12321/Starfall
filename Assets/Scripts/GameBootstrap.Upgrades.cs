@@ -11,12 +11,12 @@ public partial class GameBootstrap
         var panel = (RectTransform)upgradePanel.transform;
         if (touchControls) panel.localScale = Vector3.one * 1.06f;
         Art(panel, "Vignette", UiKit.Vignette, new Color(0, 0, 0, .6f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        upgradeHalo = Art(panel, "Halo", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .12f), AnchorTC, new Vector2(0, -90), new Vector2(1160, 540));
+        upgradeHalo = Art(panel, "Halo", UiKit.Glow, UiKit.Alpha(GameRules.Cyan, .07f), AnchorTC, new Vector2(0, -90), new Vector2(1160, 540));
 
         upgradeKicker = Ct(panel, UiKit.Track("FIELD SIGNAL"), 10, new Vector2(0, -82), new Vector2(760, 16), GameRules.Cyan, FontStyle.Bold);
         upgradeTitle = upgradeKicker;
         upgradeKickerRect = upgradeKicker.rectTransform;
-        upgradeSubtitle = Ct(panel, "选择属性与已有武器技能", 38, new Vector2(0, -98), new Vector2(940, 52), UiKit.TextMain, FontStyle.Bold);
+        upgradeSubtitle = Ct(panel, "选择属性强化", 38, new Vector2(0, -98), new Vector2(940, 52), UiKit.TextMain, FontStyle.Bold);
         upgradeTitleRect = upgradeSubtitle.rectTransform;
         DropShadow(upgradeSubtitle, -3f);
         upgradeSummary = Ct(panel, "LEVEL 01  /  FIELD MODIFICATION", 12, new Vector2(0, -152), new Vector2(900, 20), UiKit.TextDim);
@@ -89,7 +89,6 @@ public partial class GameBootstrap
             hover.body = card; hover.edge = choiceEdges[i]; hover.hoverScale = 1.025f;
         }
 
-        MakeText(panel, "Upgrade hint", touchControls ? "点击卡牌选择强化" : "点击卡牌，或按 1 / 2 / 3 选择", touchControls ? 16 : 12, TextAnchor.MiddleCenter, AnchorBC, AnchorBC, AnchorBC, new Vector2(0, touchControls ? 46 : 52), new Vector2(560, 24), UiKit.TextDim, FontStyle.Normal, null);
         rerollButton = Cta(panel, "Reroll", "刷新选项  ·  剩余 2", AnchorBC, new Vector2(0, 82), new Vector2(248, 40), GameRules.Cyan, false, Reroll, 12);
         rerollLabel = rerollButton.GetComponentInChildren<Text>();
         upgradePanel.SetActive(false);
@@ -107,15 +106,18 @@ public partial class GameBootstrap
         else choices.AddRange(GameRules.Choices(Stats, avoid, Level));
         bool bossReward = flow == UpgradeFlow.Boss;
         bool weaponFlow = flow == UpgradeFlow.Weapon;
-        Color pageAccent = bossReward ? GameRules.BossColor(bossStage) : weaponFlow ? GameRules.Gold : GameRules.Cyan;
+        // Keep the weapon draft header in the cold terminal palette. Each card
+        // carries its own option colour below.
+        Color pageAccent = bossReward ? GameRules.BossColor(bossStage) : GameRules.Cyan;
 
         upgradeTitle.text = bossReward ? "BOSS CORE EXTRACTED  /  STAGE " + bossStage.ToString("00") : weaponFlow ? "ARMORY UPLINK  /  WEAPON GROWTH" : chest ? "SUPPLY CACHE RECOVERED" : $"FIELD SIGNAL  /  LEVEL {Level:00}";
         upgradeTitle.color = pageAccent;
-        upgradeSubtitle.text = bossReward ? "选择核心共鸣" : weaponFlow ? "选择新武器或进化武器" : chest ? "选择战地补给" : "选择属性与已有武器技能";
-        upgradeSubtitle.fontSize = bossReward ? 42 : weaponFlow ? 40 : 36;
+        upgradeSubtitle.text = bossReward ? "选择核心共鸣" : weaponFlow ? "选择新武器或进化武器" : chest ? "选择战地补给" : "选择属性强化";
+        upgradeSubtitle.fontSize = MobileTextSize(bossReward ? 42 : weaponFlow ? 40 : 36);
         upgradeSubtitle.color = bossReward ? UiKit.Light(pageAccent, .62f) : UiKit.TextMain;
-        upgradeSummary.text = bossReward ? GameRules.BossName(bossStage) + "  /  唯一核心奖励 · 还可选择 " + choices.Count + " 种" : weaponFlow ? (choices.Count > 0 && choices[0].Id < 0 ? "武装补强" : "新武器 · 武器进化") : chest ? "战地补给" : "属性模块与武器技能  /  等级 " + Level.ToString("00");
-        upgradeSummary.color = bossReward ? pageAccent : weaponFlow ? GameRules.Gold : UiKit.TextDim;
+        upgradeSummary.gameObject.SetActive(!bossReward);
+        if (!bossReward)
+            upgradeSummary.text = weaponFlow ? (choices.Count > 0 && choices[0].Id < 0 ? "武装补强" : "新武器 · 武器进化") : chest ? "战地补给" : "属性模块与武器技能";
         upgradePanel.GetComponent<Image>().color = bossReward ? new Color(.033f, .015f, .03f, .97f) : weaponFlow ? new Color(.022f, .026f, .038f, .96f) : new Color(.012f, .022f, .036f, .93f);
         upgradeHalo.color = UiKit.Alpha(pageAccent, bossReward ? .24f : weaponFlow ? .16f : .1f);
         upgradeHalo.rectTransform.sizeDelta = bossReward ? new Vector2(1340, 720) : new Vector2(1160, 540);
@@ -128,13 +130,13 @@ public partial class GameBootstrap
         // Boss header keeps a clear margin from the screen top even with the 1.06 phone scale.
         rewardSealRect.anchoredPosition = new Vector2(0, -34f);
         upgradeKickerRect.anchoredPosition = new Vector2(0, bossReward ? -144f : -82f);
-        upgradeTitleRect.anchoredPosition = new Vector2(0, bossReward ? -160f : -98f);
-        upgradeSummaryRect.anchoredPosition = new Vector2(0, bossReward ? -214f : -152f);
+        upgradeTitleRect.anchoredPosition = new Vector2(0, bossReward ? (touchControls ? -150f : -160f) : (touchControls ? -90f : -98f));
+        upgradeSummaryRect.anchoredPosition = new Vector2(0, touchControls ? -164f : -152f);
 
         // Weapon cards carry two-part descriptions (effect + numbers); give them the height so text never reaches the badge rule.
         Vector2 cardSize = bossReward ? new Vector2(344, 360) : weaponFlow ? new Vector2(304, 364) : new Vector2(touchControls ? 304 : 264, touchControls ? 316 : 286);
         float spacing = bossReward ? 372f : weaponFlow ? 336f : touchControls ? 336f : 296f;
-        float centerY = bossReward ? -26f : weaponFlow ? -6f : 8f;
+        float centerY = bossReward ? (touchControls ? -64f : -26f) : weaponFlow ? (touchControls ? -26f : -6f) : touchControls ? -26f : 8f;
         float edgeAlpha = bossReward ? .92f : weaponFlow ? .56f : .24f;
         float glowAlpha = bossReward ? .3f : weaponFlow ? .15f : .05f;
         float barAlpha = bossReward ? 1f : weaponFlow ? .9f : .4f;
@@ -148,22 +150,22 @@ public partial class GameBootstrap
             bool twoLineWeapon = weaponFlow && option.Id >= 0;
             choiceTitles[i].text = evolution ? "武器进阶\n" + option.Title : option.Title;
             choiceDetails[i].text = option.Description; choiceGlyphs[i].text = option.Icon; choiceGlyphs[i].color = option.Color;
-            Color frameAccent = option.Color;
+            Color frameAccent = bossReward || weaponFlow ? option.Color : pageAccent;
             choiceBadges[i].text = bossReward ? "唯一核心  ·  每种限选一次" : weaponFlow ? (option.Id < 0 ? "ARSENAL BOOST" : evolution ? "✦  WEAPON EVOLUTION" : "NEW WEAPON") : option.IsWeapon ? "WEAPON SKILL" : chest ? "FIELD SUPPLY" : "STAT MODULE";
             choiceBadges[i].color = bossReward ? UiKit.Light(option.Color, .18f) : evolution ? UiKit.Light(option.Color, .3f) : option.Color;
             choiceIcons[i].sprite = GetSprite("Icons/" + GameRules.IconAsset(option.Id)); choiceIcons[i].color = Color.white;
             choiceIcons[i].gameObject.SetActive(choiceIcons[i].sprite != null);
-            choiceBodies[i].color = UiKit.Mix(new Color(.03f, .052f, .075f), option.Color, evolution ? .10f : bodyMix);
-            choiceEdges[i].color = UiKit.Alpha(frameAccent, evolution ? .82f : edgeAlpha);
-            choiceGlows[i].color = UiKit.Alpha(frameAccent, evolution ? .18f : glowAlpha);
-            choiceTopBars[i].color = UiKit.Alpha(frameAccent, evolution ? 1f : barAlpha);
-            choiceBadgeBgs[i].color = UiKit.Alpha(frameAccent, bossReward ? .2f : evolution ? .16f : weaponFlow ? .12f : .07f);
+            choiceBodies[i].color = UiKit.Mix(new Color(.03f, .052f, .075f), frameAccent, evolution ? .08f : bodyMix * .55f);
+            choiceEdges[i].color = UiKit.Alpha(frameAccent, evolution ? .7f : edgeAlpha * .7f);
+            choiceGlows[i].color = UiKit.Alpha(frameAccent, evolution ? .12f : glowAlpha * .55f);
+            choiceTopBars[i].color = UiKit.Alpha(frameAccent, evolution ? .9f : barAlpha * .7f);
+            choiceBadgeBgs[i].color = UiKit.Alpha(frameAccent, bossReward ? .2f : evolution ? .14f : weaponFlow ? .10f : .05f);
             choiceNumbers[i].color = UiKit.Light(frameAccent, .25f);
             choiceNumberBgs[i].color = UiKit.Alpha(frameAccent, .12f);
             choiceIconFrames[i].color = UiKit.Alpha(UiKit.Shade(option.Color, .55f), weaponFlow ? .45f : .28f);
             choiceChipEdges[i].color = UiKit.Alpha(option.Color, weaponFlow ? .7f : .32f);
             choiceHexFills[i].color = UiKit.Alpha(UiKit.Shade(option.Color, .7f), .55f);
-            choiceHexEdges[i].color = UiKit.Alpha(option.Color, .9f);
+            choiceHexEdges[i].color = UiKit.Alpha(frameAccent, .82f);
             choiceInnerEdges[i].color = UiKit.Alpha(frameAccent, evolution ? .22f : .24f);
             foreach (Transform mark in choiceCornerSets[i]) mark.GetComponent<Image>().color = UiKit.Alpha(frameAccent, evolution ? .55f : .7f);
             choiceBossRings[i].color = UiKit.Alpha(option.Color, bossReward ? .3f : .55f);
@@ -184,15 +186,15 @@ public partial class GameBootstrap
             float detailsY = bossReward ? -198f : weaponFlow ? -170f : -162f;
             choiceTitles[i].rectTransform.anchoredPosition = new Vector2(0, twoLineWeapon ? -120f : titleY);
             choiceTitles[i].rectTransform.sizeDelta = new Vector2(bossReward ? 300 : weaponFlow ? 272 : touchControls ? 268 : 228, twoLineWeapon ? 58 : 46);
-            choiceTitles[i].fontSize = twoLineWeapon ? (touchControls ? 20 : 17) : bossReward ? 23 : weaponFlow ? 21 : touchControls ? 21 : 18;
+            choiceTitles[i].fontSize = MobileTextSize(twoLineWeapon ? (touchControls ? 20 : 17) : bossReward ? 23 : weaponFlow ? 21 : touchControls ? 21 : 18);
             choiceDetails[i].rectTransform.anchoredPosition = new Vector2(0, twoLineWeapon ? -188f : detailsY);
             choiceDetails[i].alignment = twoLineWeapon ? TextAnchor.MiddleCenter : TextAnchor.UpperCenter;
-            choiceDetails[i].fontSize = touchControls ? 15 : bossReward ? 13 : 12;
+            choiceDetails[i].fontSize = MobileTextSize(touchControls ? 15 : bossReward ? 13 : 12);
             choiceDetails[i].lineSpacing = touchControls ? 1.04f : 1.14f;
             choiceDetails[i].rectTransform.sizeDelta = new Vector2(bossReward ? 300 : weaponFlow ? 272 : touchControls ? 264 : 224, twoLineWeapon ? 116 : bossReward ? 70 : 60);
             var badgeRect = (RectTransform)choiceBadges[i].transform.parent;
             badgeRect.sizeDelta = new Vector2(bossReward ? 224 : weaponFlow ? 192 : 160, bossReward ? 22 : 20);
-            choiceBadges[i].fontSize = bossReward ? 9 : 8;
+            choiceBadges[i].fontSize = MobileTextSize(bossReward ? 9 : 8);
             choiceTopBars[i].rectTransform.sizeDelta = new Vector2(bossReward ? 220 : weaponFlow ? 190 : 160, 2);
         }
         var rerollBody = rerollButton.GetComponent<Image>();

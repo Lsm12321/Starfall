@@ -19,8 +19,7 @@ public partial class GameBootstrap
         if (labels)
         {
             SetText(clockText, GameRules.TimeLabel(Elapsed));
-            SetText(waveText, GameRules.StageName(Mathf.Clamp(BossesDefeated + 1, 1, GameRules.BossCount)));
-            SetText(waveLabelText, UiKit.Track("WAVE " + Wave.ToString("00") + " / 18"));
+            SetText(stageNameText, GameRules.StageName(Mathf.Clamp(BossesDefeated + 1, 1, GameRules.BossCount)));
             SetText(killText, Kills.ToString("000"));
             SetText(levelText, Level.ToString("00"));
             SetText(stageIndexText, "STAGE " + Mathf.Clamp(BossesDefeated + 1, 1, GameRules.BossCount).ToString("00") + " / " + GameRules.BossCount.ToString("00"));
@@ -73,7 +72,7 @@ public partial class GameBootstrap
         dashFill.fillAmount = dashDisplay;
         if (labels)
         {
-            SetText(dashText, Player.DashReady ? "Ready" : Player.DashCooldown.ToString("0.0") + "s");
+            SetText(dashText, Player.DashReady ? "就绪" : Player.DashCooldown.ToString("0.0") + "秒");
             dashText.color = Player.DashReady ? GameRules.Cyan : UiKit.TextDim;
         }
 
@@ -124,7 +123,7 @@ public partial class GameBootstrap
         {
             if (Boss != null)
             {
-                SetText(bossText, "PHASE " + Boss.BossStage.ToString("00") + "  /  " + (Boss.PhaseTwo ? "PHASE II  ·  ENRAGED" : "PHASE I  ·  HUNTER"));
+                SetText(bossText, "PHASE " + Boss.BossStage.ToString("00") + "  /  " + (Boss.PhaseTwo ? "PHASE II" : "PHASE I"));
                 bossText.color = Boss.PhaseTwo ? GameRules.Pink : UiKit.TextDim;
             }
             else if (victoryPending) { SetText(bossText, "ALL THREE BOSSES DOWN  /  GATE SECURED"); }

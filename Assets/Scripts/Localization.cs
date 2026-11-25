@@ -14,13 +14,12 @@ public static class Localization
         // Menu / shell
         { "收集星尘，组合武器，穿过不断增强的敌潮，击败苏醒的遗迹守望者。", "Collect stardust, combine weapons, survive the growing swarm, and defeat the awakened ruins wardens." },
         { "选择驾驶员  /  SELECT PILOT", "SELECT PILOT" },
-        { "选择驾驶员", "SELECT PILOT" },
+        { "选择角色", "SELECT CHARACTER" },
         { "左侧拖动  移动     右下按钮  冲刺     武器自动攻击", "Drag left to move     Dash button right     Auto attack" },
         { "WASD / 方向键  移动     空格  冲刺     武器自动攻击", "WASD / Arrows  Move     Space  Dash     Auto attack" },
         { "WASD / 方向键  移动     空格  冲刺     自动攻击     C  角色     ESC  暂停", "WASD / Arrows  Move     Space  Dash     Auto attack     C  Pilot     ESC  Pause" },
         { "设置 / SETTINGS", "SETTINGS" },
-        { "选择你的共鸣者", "CHOOSE YOUR RESONATOR" },
-        { "五名驾驶员 · 五种本命武器 · 一套专属被动", "Five pilots · Five signature weapons · One unique passive each" },
+        { "选择你的共鸣者", "CHOOSE YOUR PILOT" },
         { "以当前角色出击", "DEPLOY PILOT" },
         { "返回标题", "BACK TO TITLE" },
         { "生存", "Survival" }, { "机动", "Mobility" }, { "输出", "Output" },
@@ -32,15 +31,17 @@ public static class Localization
         { "角色", "PILOT" }, { "设置", "SETTINGS" },
 
         // Characters
-        { "苍真 零", "Rei Soma" }, { "星野 莉花", "Rikka Hoshino" }, { "白濑 凛", "Rin Shirae" }, { "月城 芽衣", "Mei Tsukishiro" }, { "雨宫 由奈", "Yuna Amamiya" },
+        { "苍真 零", "Rei" }, { "星野 莉花", "Rikka" }, { "白濑 凛", "Rin" }, { "月城 芽衣", "Mei" }, { "雨宫 由奈", "Yuna" },
         { "零号观测员 / REI", "Zero Observer / REI" }, { "赤焰枪姬 / RIKKA", "Crimson Gunner / RIKKA" }, { "绝对零度 / RIN", "Absolute Zero / RIN" }, { "月环舞者 / MEI", "Lunar Dancer / MEI" }, { "雷光信使 / YUNA", "Lightning Courier / YUNA" },
         { "零号观测员", "Zero Observer" }, { "赤焰枪姬", "Crimson Gunner" }, { "绝对零度", "Absolute Zero" }, { "月环舞者", "Lunar Dancer" }, { "雷光信使", "Lightning Courier" },
         { "男 · 24岁", "Male · 24" }, { "女 · 19岁", "Female · 19" }, { "女 · 20岁", "Female · 20" }, { "女 · 18岁", "Female · 18" }, { "女 · 22岁", "Female · 22" },
-        { "星芒脉冲", "Pulse" }, { "余烬散射", "Scatter" }, { "环轨光刃", "Orbit Blade" }, { "连锁电弧", "Chain Arc" }, { "冰晶长枪", "Cryo Lance" },
-        { "临界瞄准：暴击率 +12%，拾取范围 +0.8 米。", "Critical Aim: +12% crit chance, +0.8m pickup range." },
-        { "热装填：全武器攻击速度 +16%。", "Hot Reload: +16% attack speed for all weapons." },
-        { "零域共鸣：霜缓持续时间 +1 秒，子弹穿透 +1。", "Zero Field Resonance: +1s chill duration, +1 bullet pierce." },
-        { "轨道校准：光刃环绕半径 +0.5 米，转速 +20%。", "Orbit Calibration: +0.5m blade radius, +20% spin speed." },
+        { "星芒脉冲", "Pulse" }, { "余烬散射", "Scatter" }, { "环轨光刃", "Orbit" }, { "连锁电弧", "Arc" }, { "冰晶长枪", "Cryo" },
+        { "临界瞄准：暴击率 +12%，拾取范围 +0.8 米。", "Critical Aim: +12% crit, +0.8m pickup." },
+        { "临界瞄准：暴击率 +12%，拾取范围 +0.8m。", "Critical Aim: +12% crit, +0.8m pickup." },
+        { "热装填：全武器攻击速度 +16%。", "Hot Reload: +16% attack speed." },
+        { "零域共鸣：霜缓持续时间 +1 秒，子弹穿透 +1。", "Zero Field: +1s chill, +1 pierce." },
+        { "轨道校准：光刃环绕半径 +0.5 米，转速 +20%。", "Orbit Calibration: +0.5m radius, +20% speed." },
+        { "轨道校准：光刃环绕半径 +0.5m，转速 +20%。", "Orbit Calibration: +0.5m radius, +20% speed." },
         { "过载回路：电弧伤害 +25%。", "Overload Circuit: +25% arc damage." },
         { "曾是方舟舰队的领航员。他在坠毁的遗迹中听见了星核的心跳，决定为幸存者打开最后一条航路。", "Once a navigator of the Ark Fleet. In the wreckage he heard the starcore's heartbeat, and chose to open one last route for the survivors." },
         { "出身于轨道炮兵团的王牌。莉花把每一次危险都当成烟火表演，嘴上说着不在乎，撤离名单却总被她偷偷加长。", "An ace from the orbital artillery corps. Rikka treats every danger like a fireworks show, claiming not to care while quietly adding names to the evacuation list." },
@@ -58,6 +59,7 @@ public static class Localization
         { "三位守望者尽数陨落 · 航道已经打开", "All three wardens have fallen · The route is open" },
         { "灰烬之门吞没了又一名跑者", "The Ashen Gate has swallowed another runner" },
         { "深呼吸，跑者", "Breathe, runner" },
+        { "暂停", "PAUSED" },
         { "用时", "TIME" }, { "击破", "KILLS" }, { "等级", "LEVEL" }, { "首领", "BOSSES" },
         { "伤害", "DMG" }, { "攻速", "ATK SPD" }, { "暴击", "CRIT" }, { "暴伤", "CRIT DMG" }, { "护甲", "ARMOR" }, { "生命", "HP" },
         { "武器", "WEAPONS" }, { "进化", "Evolved" }, { "下次会走得更远", "You will go farther next time" },
@@ -73,23 +75,24 @@ public static class Localization
 
         // Boss / stage
         { "第一阶段  /  灰烬之门", "STAGE 1  /  ASHEN GATE" }, { "第二阶段  /  回响裂隙", "STAGE 2  /  ECHO RIFT" }, { "第三阶段  /  星蚀核心", "STAGE 3  /  ECLIPSE CORE" },
-        { "第1阶段/灰烬之门", "STAGE 1/ASHEN GATE" }, { "第2阶段/回响裂隙", "STAGE 2/ECHO RIFT" }, { "第3阶段/星蚀核心", "STAGE 3/ECLIPSE CORE" },
+        { "第1阶段·灰烬之门", "STAGE 1/ASHEN GATE" }, { "第2阶段·回响裂隙", "STAGE 2/ECHO RIFT" }, { "第3阶段·星蚀核心", "STAGE 3/ECLIPSE CORE" },
         { "THE DREAD WARDEN  /  01  ·  噬影守望者", "THE DREAD WARDEN  /  01  ·  SHADOW WARDEN" },
         { "THE ECHO HERALD  /  02  ·  回响先驱", "THE ECHO HERALD  /  02  ·  ECHO HERALD" },
         { "THE STAR EATER  /  03  ·  星蚀巨兽", "THE STAR EATER  /  03  ·  STAR EATER" },
         { "噬影守望者", "SHADOW WARDEN" }, { "回响先驱", "ECHO HERALD" }, { "星蚀巨兽", "STAR EATER" },
         { "强敌接近", "BOSS INCOMING" }, { "核心暴露", "CORE EXPOSED" },
+        { "左侧任意位置拖动移动     右下按钮冲刺     武器自动攻击", "Drag anywhere left to move     Dash right     Auto attack" },
+        { "左侧任意位置拖动移动 右下按钮冲刺 武器自动攻击", "Drag anywhere left to move     Dash right     Auto attack" },
+        { "左侧拖动 移动 右下按钮冲刺 武器自动攻击", "Drag left to move     Dash button right     Auto attack" },
+        { "左侧拖动 移动 右下按钮 冲刺 武器自动攻击", "Drag left to move     Dash button right     Auto attack" },
         { "新武器 · 武器进化", "NEW WEAPONS · EVOLUTIONS" }, { "战地补给", "FIELD SUPPLY" }, { "属性模块与武器技能", "STAT MODULES + WEAPON SKILLS" },
         { "强敌接近  /  BOSS INCOMING", "BOSS INCOMING" },
 
         // HUD / upgrades
         { "冲刺", "DASH" }, { "就绪", "Ready" }, { "免疫", "IMMUNE" },
-        { "左侧任意位置拖动移动     右下按钮冲刺     武器自动攻击", "Drag anywhere left to move     Dash right     Auto attack" },
-        { "点击卡牌选择强化", "Tap a card to choose an upgrade" },
-        { "点击卡牌，或按 1 / 2 / 3 选择", "Click a card, or press 1 / 2 / 3" },
-        { "选择属性与已有武器技能", "CHOOSE AN ATTRIBUTE OR WEAPON SKILL" },
+        { "选择属性强化", "CHOOSE AN UPGRADE" },
         { "选择核心共鸣", "CHOOSE A CORE RESONANCE" },
-        { "选择新武器或进化武器", "CHOOSE A NEW WEAPON OR EVOLUTION" },
+        { "选择新武器或进化武器", "CHOOSE A WEAPON" },
         { "选择战地补给", "CHOOSE A FIELD SUPPLY" },
         { "刷新选项  ·  剩余 2", "REROLL  ·  2 LEFT" },
         { "刷新选项", "REROLL" }, { "剩余", "LEFT" },
@@ -97,16 +100,16 @@ public static class Localization
         { "武器进阶", "WEAPON EVOLUTION" }, { "新武器解锁", "NEW WEAPON" },
         { "武器升至", "Weapon Lv." }, { "级", "" },
         { "强化", "RANK" },
-        { "自动锁定最近目标，发射星弧脉冲。", "Auto-locks the nearest target and fires stable star-arc pulses." },
-        { "自动锁定最近目标，发射稳定的星弧能量脉冲。", "Auto-locks the nearest target and fires stable star-arc pulses." },
-        { "扇形投射多枚弹体，适合清理近身敌潮。", "Fires a fan of hot projectiles, ideal for clearing close swarms." },
-        { "扇形投射多枚高热弹体，适合清理近距离敌潮。", "Fires a fan of hot projectiles, ideal for clearing close swarms." },
+        { "自动锁定最近目标，发射星弧脉冲。", "Fires at the nearest target." },
+        { "自动锁定最近目标，发射稳定的星弧能量脉冲。", "Fires at the nearest target." },
+        { "扇形投射多枚弹体，适合清理近身敌潮。", "Fires a wide spread of projectiles." },
+        { "扇形投射多枚高热弹体，适合清理近距离敌潮。", "Fires a wide spread of projectiles." },
         { "轨道刃围绕驾驶员旋转，接触敌人并可消除弹幕。", "Orbiting blades circle the pilot, damaging enemies and clearing projectiles." },
-        { "枚光刃环绕身体旋转，命中造成伤害并消除弹幕。", " blades orbit the pilot, damaging enemies and clearing projectiles." },
-        { "电弧在敌群间跳跃，首个目标额外承受 30% 伤害。", "Arcs jump between enemies; the first target takes 30% extra damage." },
-        { "电弧在敌群之间跳跃，连续打击多个目标，首个目标额外承受 30% 伤害。", "Arcs jump between enemies and hit multiple targets; the first takes 30% extra damage." },
-        { "狙击式冰晶长枪，贯穿并施加霜缓。", "A sniper-style cryo lance that pierces and chills." },
-        { "狙击式冰晶长枪，长弹体高速贯穿并施加霜缓。", "A sniper-style cryo lance whose long projectile pierces at speed and chills." },
+        { "枚光刃环绕身体旋转，命中造成伤害并消除弹幕。", "Blades orbit and clear projectiles." },
+        { "电弧在敌群间跳跃，首个目标额外承受 30% 伤害。", "Arcs jump; first target takes +30%." },
+        { "电弧在敌群之间跳跃，连续打击多个目标，首个目标额外承受 30% 伤害。", "Arcs jump; first target takes +30%." },
+        { "狙击式冰晶长枪，贯穿并施加霜缓。", "Pierces and chills enemies." },
+        { "狙击式冰晶长枪，长弹体高速贯穿并施加霜缓。", "Pierces and chills enemies." },
         { "发射三颗子弹，火力覆盖更密集", "Fires three bullets for denser coverage" },
         { "增加子弹数和伤害，弹幕覆盖更广", "More bullets and damage for wider coverage" },
         { "增加环刃速度和数量，运转更迅捷", "More blades and speed for a faster orbit" },
@@ -145,17 +148,24 @@ public static class Localization
 
     private static readonly string[] TokenKeys =
     {
+        "临界瞄准：暴击率 +12%，拾取范围 +0.8 米。", "热装填：全武器攻击速度 +16%。",
+        "零域共鸣：霜缓持续时间 +1 秒，子弹穿透 +1。", "轨道校准：光刃环绕半径 +0.5 米，转速 +20%。",
+        "过载回路：电弧伤害 +25%。",
+        "最终伤害 +30%，最终攻速 +20%，暴击率 +20%。",
+        "生命上限 +30，护甲 +10%，每秒回复 +2；受击时 30% 概率免疫。",
+        "暴击率 +30%，暴击伤害 +50%；暴击率超过 100% 时，溢出部分每 1% 额外增加 2% 暴击伤害。",
         "苍真 零", "星野 莉花", "白濑 凛", "月城 芽衣", "雨宫 由奈",
         "零号观测员 / REI", "赤焰枪姬 / RIKKA", "绝对零度 / RIN", "月环舞者 / MEI", "雷光信使 / YUNA",
         "零号观测员", "赤焰枪姬", "绝对零度", "月环舞者", "雷光信使",
         "男 · 24岁", "女 · 19岁", "女 · 20岁", "女 · 18岁", "女 · 22岁",
         "本命武器", "专属被动", "本局武器伤害", "星链协议", "双生齐射", "六曜环阵", "超导网络", "霜蚀棱镜",
         "唯一核心奖励", "作战状态", "超载核心", "凤凰协议", "星核共鸣",
+        "噬影守望者", "回响先驱", "星蚀巨兽",
         "生存", "导出存档", "导入存档",
         "临界瞄准", "热装填", "零域共鸣", "轨道校准", "过载回路",
         "星芒脉冲", "余烬散射", "环轨光刃", "连锁电弧", "冰晶长枪",
         "第一阶段  /  灰烬之门", "第二阶段  /  回响裂隙", "第三阶段  /  星蚀核心",
-        "第1阶段/灰烬之门", "第2阶段/回响裂隙", "第3阶段/星蚀核心",
+        "第1阶段·灰烬之门", "第2阶段·回响裂隙", "第3阶段·星蚀核心",
         "受到的伤害降低", "子弹穿透数", "全部武器伤害", "并", "上限",
         "自动锁定最近目标，发射星弧脉冲。", "扇形投射", "枚弹体，适合清理近身敌潮。",
         "光刃环绕身体旋转，命中造成伤害并消除弹幕。", "轨道刃围绕驾驶员旋转，接触敌人并可消除弹幕。",
@@ -164,25 +174,37 @@ public static class Localization
         "移动速度", "每秒回复", "每秒恢复", "拾取范围", "经验拾取范围", "穿透", "霜缓", "间隔", "弹体", "单次命中", "每发", "命中间隔", "连锁", "目标", "子弹", "枚", "个",
         "恢复", "点生命", "秒", "米", "级", "强化", "武器升至", "武器进阶", "新武器解锁", "已进化", "未解锁", "剩余", "唯一核心", "还可选择", "种",
         "时间", "等级", "击杀", "武器", "角色被动", "属性加成", "武装补强", "件", "已进化", "功能暂未开放",
-        "刷新选项",
+        "刷新选项", "暴伤", "被动", "移速", "每种限选一次",
+        "脉冲", "散射", "光刃", "电弧", "冰枪",
         "新级别敌潮已部署", "共鸣强化已载入", "获得新武器", "武器进阶", "下次会走得更远", "核心暴露", "属性模块与武器技能", "战地补给"
     };
 
     private static readonly Dictionary<string, string> Tokens = new Dictionary<string, string>
     {
-        { "苍真 零", "Rei Soma" }, { "星野 莉花", "Rikka Hoshino" }, { "白濑 凛", "Rin Shirae" }, { "月城 芽衣", "Mei Tsukishiro" }, { "雨宫 由奈", "Yuna Amamiya" },
+        { "临界瞄准：暴击率 +12%，拾取范围 +0.8 米。", "Critical Aim: +12% crit, +0.8m pickup." },
+        { "临界瞄准：暴击率 +12%，拾取范围 +0.8m。", "Critical Aim: +12% crit, +0.8m pickup." },
+        { "热装填：全武器攻击速度 +16%。", "Hot Reload: +16% attack speed." },
+        { "零域共鸣：霜缓持续时间 +1 秒，子弹穿透 +1。", "Zero Field: +1s chill, +1 pierce." },
+        { "轨道校准：光刃环绕半径 +0.5 米，转速 +20%。", "Orbit Calibration: +0.5m radius, +20% speed." },
+        { "轨道校准：光刃环绕半径 +0.5m，转速 +20%。", "Orbit Calibration: +0.5m radius, +20% speed." },
+        { "过载回路：电弧伤害 +25%。", "Overload Circuit: +25% arc damage." },
+        { "最终伤害 +30%，最终攻速 +20%，暴击率 +20%。", "Final damage +30%, final attack speed +20%, crit +20%." },
+        { "生命上限 +30，护甲 +10%，每秒回复 +2；受击时 30% 概率免疫。", "Max HP +30, armor +10%, regen +2/s; 30% chance to negate damage." },
+        { "暴击率 +30%，暴击伤害 +50%；暴击率超过 100% 时，溢出部分每 1% 额外增加 2% 暴击伤害。", "Crit +30%, crit damage +50%. Above 100% crit, each 1% overflow adds 2% crit damage." },
+        { "苍真 零", "Rei" }, { "星野 莉花", "Rikka" }, { "白濑 凛", "Rin" }, { "月城 芽衣", "Mei" }, { "雨宫 由奈", "Yuna" },
         { "零号观测员 / REI", "Zero Observer / REI" }, { "赤焰枪姬 / RIKKA", "Crimson Gunner / RIKKA" }, { "绝对零度 / RIN", "Absolute Zero / RIN" }, { "月环舞者 / MEI", "Lunar Dancer / MEI" }, { "雷光信使 / YUNA", "Lightning Courier / YUNA" },
         { "零号观测员", "Zero Observer" }, { "赤焰枪姬", "Crimson Gunner" }, { "绝对零度", "Absolute Zero" }, { "月环舞者", "Lunar Dancer" }, { "雷光信使", "Lightning Courier" },
         { "男 · 24岁", "Male · 24" }, { "女 · 19岁", "Female · 19" }, { "女 · 20岁", "Female · 20" }, { "女 · 18岁", "Female · 18" }, { "女 · 22岁", "Female · 22" },
         { "本命武器", "SIGNATURE WEAPON" }, { "专属被动", "SIGNATURE TRAIT" }, { "本局武器伤害", "WEAPON DAMAGE" },
         { "唯一核心奖励", "UNIQUE CORE REWARD" }, { "作战状态", "RUN STATUS" },
         { "超载核心", "OVERLOAD CORE" }, { "凤凰协议", "PHOENIX PROTOCOL" }, { "星核共鸣", "STARCORE RESONANCE" },
+        { "噬影守望者", "SHADOW WARDEN" }, { "回响先驱", "ECHO HERALD" }, { "星蚀巨兽", "STAR EATER" },
         { "生存", "SURVIVE" }, { "导出存档", "EXPORT SAVE" }, { "导入存档", "IMPORT SAVE" },
         { "星链协议", "Star Chain Protocol" }, { "双生齐射", "Twin Volley" }, { "六曜环阵", "Six-Star Array" }, { "超导网络", "Superconducting Network" }, { "霜蚀棱镜", "Frost Prism" },
         { "临界瞄准", "Critical Aim" }, { "热装填", "Hot Reload" }, { "零域共鸣", "Zero Field Resonance" }, { "轨道校准", "Orbit Calibration" }, { "过载回路", "Overload Circuit" },
-        { "星芒脉冲", "Pulse" }, { "余烬散射", "Scatter" }, { "环轨光刃", "Orbit Blade" }, { "连锁电弧", "Chain Arc" }, { "冰晶长枪", "Cryo Lance" },
+        { "星芒脉冲", "Pulse" }, { "余烬散射", "Scatter" }, { "环轨光刃", "Orbit" }, { "连锁电弧", "Arc" }, { "冰晶长枪", "Cryo" },
         { "第一阶段  /  灰烬之门", "STAGE 1  /  ASHEN GATE" }, { "第二阶段  /  回响裂隙", "STAGE 2  /  ECHO RIFT" }, { "第三阶段  /  星蚀核心", "STAGE 3  /  ECLIPSE CORE" },
-        { "第1阶段/灰烬之门", "STAGE 1/ASHEN GATE" }, { "第2阶段/回响裂隙", "STAGE 2/ECHO RIFT" }, { "第3阶段/星蚀核心", "STAGE 3/ECLIPSE CORE" },
+        { "第1阶段·灰烬之门", "STAGE 1/ASHEN GATE" }, { "第2阶段·回响裂隙", "STAGE 2/ECHO RIFT" }, { "第3阶段·星蚀核心", "STAGE 3/ECLIPSE CORE" },
         { "受到的伤害降低", "Damage taken -" }, { "子弹穿透数", "Bullet pierce " },
         { "全部武器伤害", "All weapon damage " }, { "并", " and " }, { "上限", " cap " },
         { "自动锁定最近目标，发射星弧脉冲。", "Auto-locks the nearest target and fires star-arc pulses." },
@@ -195,13 +217,14 @@ public static class Localization
         { "攻击速度", "Attack speed " }, { "伤害", "Damage " }, { "攻速", "ATK SPD " }, { "暴击伤害", "Crit damage " }, { "暴击率", "Crit " }, { "暴击", "Crit " },
         { "护甲", "Armor " }, { "生命上限", "Max HP " }, { "生命", "HP " }, { "移动速度", "Move speed " }, { "每秒回复", "Regen/s " }, { "每秒恢复", "Regen/s " },
         { "拾取范围", "Pickup range " }, { "经验拾取范围", "XP pickup range " }, { "穿透", "Pierce " }, { "霜缓", "Chill " },
-        { "间隔", "Interval " }, { "弹体", "projectiles " }, { "单次命中", "Hit " }, { "每发", "Per shot " }, { "命中间隔", "Hit interval " },
+        { "间隔", "CD " }, { "弹体", "projectiles " }, { "单次命中", "Hit " }, { "每发", "Per shot " }, { "命中间隔", "Hit interval " },
         { "连锁", "Chain " }, { "目标", "targets " }, { "子弹", "bullets " }, { "枚", "" }, { "个", "" },
         { "恢复", "Restore " }, { "点生命", " HP" }, { "秒", "s" }, { "米", "m" }, { "级", "" },
         { "强化", "Rank " }, { "武器升至", "Weapon Lv." }, { "武器进阶", "WEAPON EVOLUTION" }, { "新武器解锁", "NEW WEAPON" },
         { "已进化", "Evolved " }, { "未解锁", "LOCKED" }, { "剩余", "LEFT " }, { "唯一核心", "UNIQUE CORE" }, { "还可选择", "" }, { "种", " options" },
         { "时间", "Time " }, { "等级", "Level " }, { "击杀", "Kills " }, { "武器", "Weapons " }, { "角色被动", "Passive: " },
-        { "刷新选项", "REROLL" },
+        { "刷新选项", "REROLL" }, { "暴伤", "Crit DMG " }, { "被动", "Passive " }, { "移速", "Move speed " }, { "每种限选一次", "ONCE PER TYPE" },
+        { "脉冲", "Pulse" }, { "散射", "Scatter" }, { "光刃", "Blades" }, { "电弧", "Arc" }, { "冰枪", "Cryo" },
         { "属性加成", "Stat bonus " }, { "武装补强", "Armory boost " }, { "件", "" }, { "任务", "Mission " }, { "状态", "Status " },
         { "功能暂未开放", "Feature not available yet" }, { "新级别敌潮已部署", "NEW ENEMY WAVE DEPLOYED" },
         { "共鸣强化已载入", "RESONANCE UPGRADE LOADED" }, { "获得新武器", "NEW WEAPON ACQUIRED" }, { "下次会走得更远", "You will go farther next time" },
@@ -211,7 +234,7 @@ public static class Localization
     private static readonly Dictionary<string, string> Chinese = new Dictionary<string, string>
     {
         { "BEST KILLS", "最佳击杀" }, { "CLEARS", "通关" },
-        { "PILOT ARCHIVE / ASHEN GATE EXPEDITION", "驾驶员档案 / 灰烬门远征" }, { "ACTIVE FILE", "当前档案" },
+        { "PILOT ARCHIVE", "驾驶员档案" }, { "ACTIVE FILE", "当前档案" },
         { "SYSTEM CONFIG", "系统设置" }, { "FIELD SIGNAL", "战场信号" },
         { "RUN COMPLETE / SECTOR CLEARED", "远征完成 / 区域清除" }, { "RUN OVER / SIGNAL LOST", "远征结束 / 信号丢失" },
         { "THE NIGHT BREAKS", "夜幕破晓" }, { "SIGNAL LOST", "信号丢失" }, { "PAUSED", "已暂停" },
@@ -223,6 +246,19 @@ public static class Localization
         { "ARMORY UPLINK / WEAPON GROWTH", "武器上行 / 武器成长" }
     };
 
+    private static readonly Dictionary<string, string> ChineseTokens = new Dictionary<string, string>
+    {
+        { "SURVIVOR FILE", "幸存者档案" }, { "ASHEN GATE", "灰烬之门" },
+        { "STARFALL STUDIO", "星陨工作室" }, { "MOBILE", "移动端" }, { "BUILD", "版本" },
+        { "FIELD SIGNAL", "战场信号" }, { "LEVEL", "等级" }, { "BOSS CORE EXTRACTED", "首领核心提取" }, { "STAGE", "阶段" },
+        { "SECTOR CLEARED", "区域清除" }, { "WEAPON EVOLUTION", "武器进化" }, { "NEW WEAPON", "新武器" },
+        { "STAT MODULE", "属性模块" }, { "WEAPON SKILL", "武器技能" }, { "FIELD SUPPLY", "战地补给" },
+        { "ARSENAL BOOST", "武装补强" }, { "UNIQUE CORE", "唯一核心" }, { "TOTAL", "总计" },
+        { "READY", "就绪" }, { "Ready", "就绪" }, { "WARNING", "警告" }, { "PHASE", "阶段" }, { "ENRAGED", "狂暴" },
+        { "XP", "经验" }, { "HP", "生命" }, { "LV", "等级" }, { "Lv", "等级" }, { "BOSS", "首领" },
+        { "WAVE", "波次" }, { "ARENA", "区域" }
+    };
+
     public static void SetLanguage(int language)
     {
         language = language == 1 ? 1 : 0;
@@ -231,13 +267,26 @@ public static class Localization
         Changed?.Invoke();
     }
 
+    public static void RefreshAll() => Changed?.Invoke();
+
     public static string Translate(string source)
     {
         if (string.IsNullOrEmpty(source)) return source;
         if (Language == 0)
         {
             string plain = Regex.Replace(source.Replace("\u2009", string.Empty), " {2,}", " ").Trim();
-            return Chinese.TryGetValue(plain, out string chinese) ? chinese : source;
+            if (Chinese.TryGetValue(plain, out string chinese)) return chinese;
+            string chineseResult = plain;
+            var keys = new List<string>(ChineseTokens.Keys);
+            keys.Sort((a, b) => b.Length.CompareTo(a.Length));
+            foreach (string key in keys)
+                if (chineseResult.Contains(key)) chineseResult = chineseResult.Replace(key, ChineseTokens[key]);
+            chineseResult = Regex.Replace(chineseResult, @"(\d+(?:\.\d+)?)s\b", "$1秒");
+            // Keep compact distance units in their UI form. Character dossiers use m
+            // alongside numeric readouts, so localization should not expand it back to 米.
+            chineseResult = Regex.Replace(chineseResult, @"\bII\b", "二");
+            chineseResult = Regex.Replace(chineseResult, @"\bI\b", "一");
+            return chineseResult;
         }
         bool tracked = source.Contains("\u2009");
         string cleaned = tracked ? source.Replace("\u2009", string.Empty) : source;

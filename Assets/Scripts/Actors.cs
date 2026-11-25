@@ -106,8 +106,8 @@ public sealed class PlayerActor : MonoBehaviour
             float spread = GameRules.ScatterSpread;
             float power = scatterEvolved ? GameRules.ScatterDamage(scatter) * 1.3f : GameRules.ScatterDamage(scatter);
             int scatterPierce = 2 + stats.Pierce;
-            // Longer reach so the wider evolved spread still connects at mid range.
-            for (int i = 0; i < count; i++) Shoot(Rotate(targetDirection, (i - (count - 1) * .5f) * spread), power, 13.5f, .72f, scatterPierce, scatterEvolved ? new Color(1f, .9f, .38f) : GameRules.Gold, scatterEvolved ? .27f : .2f, false, 0, 0, 2.2f, 0, .25f, scatterEvolved ? "ember_bolt" : null, 1);
+            // Ember Scatter reaches 20% farther without changing its projectile speed.
+            for (int i = 0; i < count; i++) Shoot(Rotate(targetDirection, (i - (count - 1) * .5f) * spread), power, 13.5f, .864f, scatterPierce, scatterEvolved ? new Color(1f, .9f, .38f) : GameRules.Gold, scatterEvolved ? .27f : .2f, false, 0, 0, 2.2f, 0, .25f, scatterEvolved ? "ember_bolt" : null, 1);
             if (stats.EvolvedWeapons[1]) Effects.EvolvedScatterVolley(transform.position + (Vector3)targetDirection * .15f, targetDirection);
             else Effects.Burst(transform.position + (Vector3)targetDirection * .4f, GameRules.Gold, 3, .08f);
             SoundBank.Play(SoundCue.Scatter, .16f);
@@ -236,14 +236,14 @@ public sealed class PlayerActor : MonoBehaviour
         var game = GameBootstrap.Game;
         if (game.Stats.DamageImmunityChance > 0 && GameRules.RollDamageImmunity(game.Stats.DamageImmunityChance))
         {
-            Effects.FloatingNumber(transform.position + Vector3.up * .65f, "免疫", GameRules.Cyan, true);
+            Effects.FloatingNumber(transform.position + Vector3.up * .65f, "免疫", GameRules.Cyan, FloatingNumberTier.Normal);
             Effects.Ring(transform.position, GameRules.Cyan, .95f, .28f);
             SoundBank.Play(SoundCue.Upgrade, .18f);
             return;
         }
         int damage = Mathf.Max(1, Mathf.RoundToInt(amount * (1 - Mathf.Clamp(game.Stats.Armor, 0, .5f))));
         health = Mathf.Max(0, health - damage); immunity = .8f; hitFlash = .15f;
-        Effects.FloatingNumber(transform.position + Vector3.up * .5f, "-" + damage, GameRules.Pink, true);
+        Effects.FloatingNumber(transform.position + Vector3.up * .5f, "-" + damage, GameRules.Pink, FloatingNumberTier.Normal);
         Effects.Burst(transform.position, GameRules.Pink, 8, .1f); SoundBank.Play(SoundCue.Hurt, .25f);
         if (health <= 0) GameBootstrap.Game.BeginPlayerDeath();
     }
@@ -276,6 +276,7 @@ public sealed class EnemyActor : MonoBehaviour
     private Vector2 recoil, chargeDirection, eliteDirection, echoDestination;
     private SpriteRenderer visual, shadow;
     private Color tint;
+    private Color BodyTint => BossStage == 1 ? Color.white : tint;
 
     public void Setup(EnemyKind kind, Vector2 position, float difficulty, int bossStage = 0, float attackScale = 1f)
     {
@@ -315,7 +316,7 @@ public sealed class EnemyActor : MonoBehaviour
             touchDamage = Mathf.Max(1, Mathf.RoundToInt(touchDamage * difficulty * attackScale));
         }
         shadow = Effects.Sprite("Enemy shadow", transform, GameBootstrap.Game.Shape("circle"), new Color(0, 0, 0, .3f), new Vector3(0, -.25f, .1f), new Vector3(Radius * 2.1f, Radius * .75f, 1), 0);
-        visual = Effects.Sprite("Enemy body", transform, GameBootstrap.Game.GetSprite("starfall_" + asset), tint, Vector3.zero, Vector3.one * scale, 8);
+        visual = Effects.Sprite("Enemy body", transform, GameBootstrap.Game.GetSprite("starfall_" + asset), BodyTint, Vector3.zero, Vector3.one * scale, 8);
         Effects.Ring(transform.position, kind == EnemyKind.Boss ? tint : new Color(1, .45f, .3f), Radius * 1.5f, spawnDelay);
     }
 
@@ -324,7 +325,13 @@ public sealed class EnemyActor : MonoBehaviour
         var game = GameBootstrap.Game;
         if (dead || game.State != RunState.Playing || game.Player == null) return;
         float dt = Time.deltaTime; spawnDelay -= dt;
-        if (spawnDelay > 0) { visual.color = new Color(tint.r, tint.g, tint.b, .4f); return; }
+        if (spawnDelay > 0)
+        {
+            Color spawnTint = BodyTint;
+            spawnTint.a = .4f;
+            visual.color = spawnTint;
+            return;
+        }
         if (slowUntil > Time.time && slowDamage > 0)
         {
             slowDamageTimer -= dt;
@@ -415,7 +422,13 @@ public sealed class EnemyActor : MonoBehaviour
         transform.position = GameRules.Clamp(position);
         visual.transform.localPosition = IsAnchored ? Vector3.zero : new Vector3(0, Mathf.Sin(Time.time * (Kind == EnemyKind.Runner || Kind == EnemyKind.NovaReaver ? 15 : 5) + GetInstanceID()) * .04f, 0);
         visual.flipX = toward.x < 0; flashTimer -= dt;
-        visual.color = flashTimer > 0 ? new Color(1f, .95f, .95f) : chargeWarn > 0 || eliteWarn > 0 ? Color.Lerp(tint, GameRules.Pink, Mathf.PingPong(Time.time * 8, 1)) : IsChilled ? Color.Lerp(tint, new Color(.52f, .84f, 1f), .72f) : tint;
+        Color bodyTint = BodyTint;
+        if (flashTimer > 0)
+            visual.color = BossStage == 1 ? GameRules.Pink : new Color(1f, .95f, .95f);
+        else if (eliteWarn > 0)
+            visual.color = Color.Lerp(bodyTint, GameRules.Pink, Mathf.PingPong(Time.time * 8, 1));
+        else
+            visual.color = IsChilled ? Color.Lerp(bodyTint, new Color(.52f, .84f, 1f), .72f) : bodyTint;
         contactTimer -= dt;
         if (distance < Radius + .36f && contactTimer <= 0) { contactTimer = .7f; game.Player.TakeDamage(touchDamage); }
     }
@@ -592,7 +605,7 @@ public sealed class EnemyActor : MonoBehaviour
     }
 
     private void Shoot(Vector2 direction, float velocity, int damage, float size)
-    { Projectile.Create((Vector2)transform.position + direction * (Radius + .12f), direction, velocity, damage, 1, 7, tint, false, true, size); }
+    { Projectile.Create((Vector2)transform.position + direction * (Radius + .12f), direction, velocity * GameRules.EnemyProjectileSpeedScale, damage, 1, 7, tint, false, true, size); }
 
     public void ApplySlow(float multiplier, float duration, int damagePerTick = 0, float damageTickInterval = .25f, bool evolvedVisual = false)
     {

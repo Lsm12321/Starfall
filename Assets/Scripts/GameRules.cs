@@ -24,7 +24,7 @@ public static class CharacterRoster
         new CharacterProfile(CharacterKind.Rei, "苍真 零", "零号观测员", "男 · 24岁", "星芒脉冲", "临界瞄准：暴击率 +12%，拾取范围 +0.8 米。", "曾是方舟舰队的领航员。他在坠毁的遗迹中听见了星核的心跳，决定为幸存者打开最后一条航路。", "portrait_rei", 0, new Color(.31f, .93f, .94f)),
         new CharacterProfile(CharacterKind.Rikka, "星野 莉花", "赤焰枪姬", "女 · 19岁", "余烬散射", "热装填：全武器攻击速度 +16%。", "出身于轨道炮兵团的王牌。莉花把每一次危险都当成烟火表演，嘴上说着不在乎，撤离名单却总被她偷偷加长。", "portrait_rikka", 1, new Color(1f, .48f, .31f)),
         new CharacterProfile(CharacterKind.Rin, "白濑 凛", "绝对零度", "女 · 20岁", "冰晶长枪", "零域共鸣：霜缓持续时间 +1 秒，子弹穿透 +1。", "前寒区研究所的理论物理学家。她将失控的冷凝核心改造成武器，相信所有失序的事物都能被重新计算。", "portrait_rin", 4, new Color(.47f, .82f, 1f)),
-        new CharacterProfile(CharacterKind.Mei, "月城 芽衣", "月环舞者", "女 · 18岁", "环轨光刃", "轨道校准：光刃环绕半径 +0.5 米，转速 +20%。", "机械神社最后的守卫，和她的四枚微型刃无人机一起长大。她记得每一台机器的名字，也从不让同伴独自返航。", "portrait_mei", 2, new Color(.74f, .55f, 1f)),
+        new CharacterProfile(CharacterKind.Mei, "月城 芽衣", "月环舞者", "女 · 18岁", "环轨光刃", "轨道校准：光刃环绕半径 +0.5m，转速 +20%。", "机械神社最后的守卫，和她的四枚微型刃无人机一起长大。她记得每一台机器的名字，也从不让同伴独自返航。", "portrait_mei", 2, new Color(.74f, .55f, 1f)),
         new CharacterProfile(CharacterKind.Yuna, "雨宫 由奈", "雷光信使", "女 · 22岁", "连锁电弧", "过载回路：电弧伤害 +25%。", "在城市断电的那一夜，她用自制线圈给整座避难站供能。如今她带着相同的线圈穿越荒原，追逐一则来自星核的求救信号。", "portrait_yuna", 3, new Color(1f, .48f, .72f))
     };
     public static CharacterProfile Get(CharacterKind id) => All[Mathf.Clamp((int)id, 0, All.Length - 1)];
@@ -116,6 +116,11 @@ public sealed class UpgradeOption
 public static class GameRules
 {
     public const float BossTime = 180f;
+    public const float EnemyProjectileSpeedScale = .9f;
+    public static float StageOneMidgameMinionScale(int stage, float elapsed)
+    {
+        return stage == 1 && elapsed >= 60f && elapsed < 135f ? .85f : 1f;
+    }
     public const int BossCount = 3;
     public const float StageTwoIntermission = 120f;
     public const float StageThreeIntermission = 150f;
@@ -128,10 +133,10 @@ public static class GameRules
     public const float OrbitHitIntervalEvolved = .32f;
     public const float AutoTargetRange = 12f;
 
-    // 十类普通强化的逐级数值。数据与《数值调整方案.xlsm》Sheet3 一致。
-    private static readonly float[] DamageUpgradeValues = { .25f, .30f, .35f, .40f, .45f, .50f, .60f };
+    // 十类普通强化的逐级数值，基于《数值调整方案.xlsm》Sheet3。
+    private static readonly float[] DamageUpgradeValues = { .20f, .25f, .30f, .35f, .40f, .45f, .55f };
     private static readonly float[] HasteUpgradeValues = { .15f, .18f, .21f, .24f, .28f, .32f, .36f };
-    private static readonly float[] SpeedUpgradeValues = { .10f, .10f, .10f, .10f, .10f, .10f, .10f };
+    private static readonly float[] SpeedUpgradeValues = { .10f, .10f, .10f, .10f, .10f };
     private static readonly float[] CritDamageUpgradeValues = { .20f, .20f, .25f, .25f, .30f, .30f, .40f };
     private static readonly float[] MagnetUpgradeValues = { 1.5f, 2f, 2.5f };
     private static readonly float[] CritUpgradeValues = { .10f, .12f, .14f, .16f, .18f, .21f, .25f };
@@ -165,11 +170,11 @@ public static class GameRules
     public static int XpNeeded(int level) { return 36 + level * 14 + Mathf.Max(0, level - 10) * 5; }
     public static string BossName(int stage)
     {
-        switch (stage) { case 1: return "THE DREAD WARDEN  /  01  ·  噬影守望者"; case 2: return "THE ECHO HERALD  /  02  ·  回响先驱"; default: return "THE STAR EATER  /  03  ·  星蚀巨兽"; }
+        switch (stage) { case 1: return "噬影守望者"; case 2: return "回响先驱"; default: return "星蚀巨兽"; }
     }
     public static string StageName(int stage)
     {
-        switch (stage) { case 1: return "第1阶段/灰烬之门"; case 2: return "第2阶段/回响裂隙"; default: return "第3阶段/星蚀核心"; }
+        switch (stage) { case 1: return "第1阶段·灰烬之门"; case 2: return "第2阶段·回响裂隙"; default: return "第3阶段·星蚀核心"; }
     }
     public static string BossVisual(int stage) => stage == 1 ? "starfall_boss_star_eater" : stage == 2 ? "starfall_boss_echo_herald" : "starfall_boss_warden";
     public static Color BossColor(int stage) => stage == 1 ? Pink : stage == 2 ? Gold : Violet;
@@ -234,7 +239,7 @@ public static class GameRules
     { return 1f + Mathf.Clamp(stage - 1, 0, BossCount - 1) * .85f; }
     public static float BossAttackMultiplier(int stage)
     { return stage >= 3 ? 1.4f : 1f + Mathf.Clamp(stage - 1, 0, BossCount - 1) * .32f; }
-    public static int MaxRank(int id) => id == 11 ? MaxPierceRank : id == 9 ? 3 : id == 13 ? 5 : MaxUpgradeRank;
+    public static int MaxRank(int id) => id == 7 ? SpeedUpgradeValues.Length : id == 11 ? MaxPierceRank : id == 9 ? 3 : id == 13 ? 5 : MaxUpgradeRank;
     private static float ValueAt(float[] values, int rank) => values[Mathf.Clamp(rank, 0, values.Length - 1)];
     private static int ValueAt(int[] values, int rank) => values[Mathf.Clamp(rank, 0, values.Length - 1)];
     public static float DamageUpgradeAtRank(int rank) => ValueAt(DamageUpgradeValues, rank);

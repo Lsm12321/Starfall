@@ -58,7 +58,7 @@ public partial class GameBootstrap
         settingsPanel = NewUI<Image>("Settings screen", overlay).gameObject;
         Stretch((RectTransform)settingsPanel.transform);
         var background = settingsPanel.GetComponent<Image>();
-        background.color = new Color(.006f, .012f, .022f, .94f);
+        background.color = new Color(.006f, .012f, .022f, .90f);
         background.raycastTarget = true;
 
         var root = (RectTransform)settingsPanel.transform;
@@ -66,20 +66,28 @@ public partial class GameBootstrap
         // Canvas is 1440x810 (desktop 16:9) or 1800x810 (touch 20:9) inside the safe area; keep >=30 units of margin.
         float width = touch ? 1440f : 1240f, height = touch ? 750f : 736f;
         var modal = Frame(root, "Settings frame", AnchorCC, Vector2.zero, new Vector2(width, height), GameRules.Cyan, .98f);
-        Art(modal, "Header wash", UiKit.GradientUp, UiKit.Alpha(GameRules.Cyan, .07f), new Vector2(0, .84f), new Vector2(1, 1), AnchorCC, Vector2.zero, Vector2.zero);
+        Art(modal, "Header wash", UiKit.GradientUp, UiKit.Alpha(GameRules.Cyan, .035f), new Vector2(0, .84f), new Vector2(1, 1), AnchorCC, Vector2.zero, Vector2.zero);
 
         // Header: identity on the left, close on the right.
         Lt(modal, UiKit.Track("SYSTEM CONFIG"), 11, new Vector2(44, -30), new Vector2(400, 18), GameRules.Cyan, FontStyle.Bold);
         Lt(modal, "设置", 30, new Vector2(44, -50), new Vector2(300, 44), UiKit.TextMain, FontStyle.Bold);
         float closeSize = touch ? 68f : 52f;
-        Cta(modal, "Close settings", "×", AnchorTR, new Vector2(-28, -24), new Vector2(closeSize, closeSize), GameRules.Cyan, false, CloseSettings, touch ? 28 : 24);
+        var close = Node(modal, "Close settings", AnchorTR, new Vector2(-28, -24), new Vector2(closeSize, closeSize));
+        var closeHit = Art(close, "Hit area", UiKit.Solid, new Color(1, 1, 1, .001f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
+        closeHit.raycastTarget = true;
+        var closeButton = close.gameObject.AddComponent<Button>();
+        closeButton.targetGraphic = closeHit; closeButton.transition = Selectable.Transition.None;
+        closeButton.onClick.AddListener(CloseSettings);
+        var closeX1 = Art(close, "X 1", UiKit.Solid, UiKit.TextMain, AnchorCC, Vector2.zero, new Vector2(2f, touch ? 26f : 20f));
+        var closeX2 = Art(close, "X 2", UiKit.Solid, UiKit.TextMain, AnchorCC, Vector2.zero, new Vector2(2f, touch ? 26f : 20f));
+        closeX1.rectTransform.localRotation = Quaternion.Euler(0, 0, 45f);
+        closeX2.rectTransform.localRotation = Quaternion.Euler(0, 0, -45f);
         HLine(modal, "Header rule", 28, -112, 1, new Color(1, 1, 1, .08f));
 
         // Navigation rail.
         const float top = -128f, railX = 28f, footer = 28f;
         float railWidth = touch ? 270f : 236f, bodyHeight = height + top - footer;
         var nav = Node(modal, "Settings navigation", AnchorTL, new Vector2(railX, top), new Vector2(railWidth, bodyHeight));
-        Art(nav, "Rail", UiKit.Soft, new Color(.02f, .04f, .06f, .55f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         string[] names = { "音频", "画面", "通用", "数据" };
         float navHeight = touch ? 84f : 62f, navGap = 6f, itemWidth = railWidth - 16f;
         for (int i = 0; i < 4; i++)
@@ -87,7 +95,7 @@ public partial class GameBootstrap
             int page = i;
             var item = Node(nav, "Settings nav " + i, AnchorTL, new Vector2(8, -8 - i * (navHeight + navGap)), new Vector2(itemWidth, navHeight));
             var body = item.gameObject.AddComponent<Image>();
-            body.sprite = UiKit.Soft; body.type = Image.Type.Sliced; body.raycastTarget = true;
+            body.sprite = UiKit.Solid; body.raycastTarget = true; body.color = new Color(1, 1, 1, .001f);
             var button = item.gameObject.AddComponent<Button>();
             button.targetGraphic = body;
             button.transition = Selectable.Transition.None;
@@ -133,11 +141,8 @@ public partial class GameBootstrap
         bool touch = touchControls;
         float noticeHeight = touch ? 104f : 92f;
         var notice = Node(page, "Data status", new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, -68), new Vector2(0, noticeHeight));
-        Art(notice, "Fill", UiKit.Soft, UiKit.Alpha(UiKit.Gold, .06f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Fill(notice, "Edge", UiKit.SoftEdge, UiKit.Alpha(UiKit.Gold, .32f));
-        var chip = Node(notice, "Status chip", AnchorTL, new Vector2(22, -20), new Vector2(touch ? 80f : 70f, touch ? 30f : 26f));
-        Art(chip, "Fill", UiKit.SoftSmall, UiKit.Alpha(UiKit.Gold, .16f), Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
-        Mc(chip, "未开放", touch ? 14 : 13, UiKit.Gold, FontStyle.Bold);
+        Art(notice, "Rule", UiKit.Solid, UiKit.Alpha(UiKit.Gold, .4f), AnchorTL, new Vector2(0, -2), new Vector2(180, 2));
+        Lt(notice, "未开放", touch ? 14 : 13, new Vector2(22, -18), new Vector2(80, 24), UiKit.Gold, FontStyle.Bold);
         Lm(notice, "存档导入与导出", touch ? 19 : 17, new Vector2(touch ? 118f : 108f, -18), new Vector2(400, touch ? 34f : 30f), UiKit.TextMain, FontStyle.Bold);
         Lt(notice, "将在后续版本接入，当前不可使用。", touch ? 16 : 14, new Vector2(22, touch ? -62f : -56f), new Vector2(700, 24), UiKit.TextDim);
 
@@ -152,9 +157,9 @@ public partial class GameBootstrap
     {
         var root = Node(parent, name, AnchorTL, position, size);
         var body = root.gameObject.AddComponent<Image>();
-        body.sprite = UiKit.Soft; body.type = Image.Type.Sliced; body.raycastTarget = true;
-        body.color = new Color(.03f, .05f, .07f, .6f);
-        Fill(root, "Edge", UiKit.SoftEdge, new Color(1, 1, 1, .1f));
+        body.sprite = UiKit.Solid; body.raycastTarget = true;
+        body.color = new Color(1, 1, 1, .001f);
+        Art(root, "Rule", UiKit.Solid, new Color(1, 1, 1, .12f), AnchorTL, new Vector2(0, -2), new Vector2(size.x, 1));
         Mc(root, caption, touchControls ? 17 : 15, UiKit.TextMute, FontStyle.Bold);
         var button = root.gameObject.AddComponent<Button>();
         button.targetGraphic = body; button.transition = Selectable.Transition.None;
@@ -165,7 +170,7 @@ public partial class GameBootstrap
     {
         var page = Node(content, "Settings page " + title, Vector2.zero, Vector2.one, AnchorCC, Vector2.zero, Vector2.zero);
         Lt(page, title, 24, new Vector2(0, 0), new Vector2(300, 34), UiKit.TextMain, FontStyle.Bold);
-        HLine(page, "Page rule", 0, -46, 1, new Color(1, 1, 1, .1f));
+        HLine(page, "Page rule", 0, -46, 1, new Color(1, 1, 1, .06f));
         page.gameObject.SetActive(false);
         return page;
     }
@@ -180,8 +185,8 @@ public partial class GameBootstrap
         {
             if (settingsNavLabels[i] == null) continue;
             bool active = i == settingsPage;
-            settingsNavBodies[i].color = active ? UiKit.Alpha(GameRules.Cyan, .12f) : new Color(1, 1, 1, .001f);
-            settingsNavMarks[i].color = active ? GameRules.Cyan : new Color(1, 1, 1, .1f);
+            settingsNavBodies[i].color = active ? UiKit.Alpha(GameRules.Cyan, .09f) : new Color(1, 1, 1, .001f);
+            settingsNavMarks[i].color = active ? GameRules.Cyan : new Color(1, 1, 1, .06f);
             settingsNavLabels[i].color = active ? GameRules.Cyan : UiKit.TextDim;
             settingsNavIndices[i].color = active ? GameRules.Cyan : UiKit.TextMute;
         }
@@ -192,7 +197,7 @@ public partial class GameBootstrap
     {
         float height = SettingsRowHeight;
         var row = Node(parent, label + " row", new Vector2(0, 1), new Vector2(1, 1), new Vector2(.5f, 1), new Vector2(0, y), new Vector2(0, height));
-        Art(row, "Row rule", UiKit.Solid, new Color(1, 1, 1, .06f), Vector2.zero, new Vector2(1, 0), new Vector2(.5f, 0), Vector2.zero, new Vector2(0, 1));
+        Art(row, "Row rule", UiKit.Solid, new Color(1, 1, 1, .08f), Vector2.zero, new Vector2(1, 0), new Vector2(.5f, 0), Vector2.zero, new Vector2(0, 1));
         Lm(row, label, SettingsLabelSize, Vector2.zero, new Vector2(SettingsControlX - 16f, height), UiKit.TextMain, FontStyle.Bold);
         return row;
     }
@@ -237,7 +242,7 @@ public partial class GameBootstrap
         {
             if (updating) return;
             updating = true;
-            int rounded = Mathf.Clamp(Mathf.RoundToInt(raw / 5f) * 5, 0, 100);
+            int rounded = Mathf.Clamp(Mathf.RoundToInt(raw), 0, 100);
             slider.SetValueWithoutNotify(rounded);
             updating = false;
             set(rounded);
@@ -266,8 +271,8 @@ public partial class GameBootstrap
             int index = i;
             var button = Node(row, label + " option " + i, AnchorTL, new Vector2(SettingsControlX + i * (width + gap), -(SettingsRowHeight - height) * .5f), new Vector2(width, height));
             var body = button.gameObject.AddComponent<Image>();
-            body.sprite = UiKit.Soft; body.type = Image.Type.Sliced; body.raycastTarget = true;
-            var edge = Fill(button, "Edge", UiKit.SoftEdge, new Color(1, 1, 1, .12f));
+            body.sprite = UiKit.Solid; body.raycastTarget = true;
+            var edge = Art(button, "Rule", UiKit.Solid, new Color(1, 1, 1, .14f), new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, .5f), Vector2.zero, new Vector2(2, -12));
             var text = Mc(button, options[i], touch ? 17 : 15, UiKit.TextDim, FontStyle.Bold);
             var click = button.gameObject.AddComponent<Button>();
             click.targetGraphic = body;
@@ -285,8 +290,8 @@ public partial class GameBootstrap
             for (int i = 0; i < count; i++)
             {
                 bool active = i == current;
-                bodies[i].color = active ? UiKit.Alpha(GameRules.Cyan, .2f) : new Color(.03f, .06f, .085f, .85f);
-                edges[i].color = active ? UiKit.Alpha(GameRules.Cyan, .85f) : new Color(1, 1, 1, .12f);
+                bodies[i].color = active ? UiKit.Alpha(GameRules.Cyan, .06f) : new Color(1, 1, 1, .001f);
+                edges[i].color = active ? GameRules.Cyan : new Color(1, 1, 1, .06f);
                 labels[i].color = active ? GameRules.Cyan : UiKit.TextDim;
             }
         });
